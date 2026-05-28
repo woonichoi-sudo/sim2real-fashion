@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini 실사화 테스트</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f4f5; color: #18181b; }
+  .wrap { max-width: 1150px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #71717a; font-size: 13px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 4px; color: #3f3f46; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #d4d4d8; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; }
+  input:disabled, select:disabled { background: #f4f4f5; color: #a1a1aa; }
+  textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .chk { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .chk input { width: auto; }
+  .chk label { margin: 0; }
+  button { margin-top: 16px; width: 100%; padding: 12px; background: #18181b; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  button:disabled { background: #a1a1aa; cursor: not-allowed; }
+  .preview { width: 100%; border-radius: 8px; border: 1px solid #e4e4e7; margin-top: 8px; display: block; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .thumbs img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e4e4e7; }
+  .result-box { min-height: 300px; display: flex; align-items: center; justify-content: center; background: #fafafa; border: 1px dashed #d4d4d8; border-radius: 8px; color: #a1a1aa; font-size: 13px; text-align: center; padding: 16px; }
+  .err { color: #b91c1c; font-size: 12px; white-space: pre-wrap; word-break: break-all; margin-top: 8px; }
+  .hint { font-size: 11px; color: #a1a1aa; margin-top: 4px; }
+  .section { border-top: 1px solid #f0f0f1; margin-top: 16px; padding-top: 4px; }
+  .section-title { font-size: 11px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: .04em; margin-top: 14px; }
+  .warn { font-size: 11px; color: #b45309; margin-top: 4px; }
+  a.dl { display: inline-block; margin-top: 8px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gemini 실사화 테스트</h1>
+  <div class="sub">3D 아바타 → 실사 변환. API 키는 브라우저 localStorage에만 저장됩니다(공개 배포 금지). 설정은 선택 모델에 맞춰 자동으로 제한됩니다.</div>
+
+  <div class="grid">
+    <!-- 입력 -->
+    <div class="card">
+      <label>Gemini API Key</label>
+      <input type="password" id="apiKey" placeholder="AIza...">
+      <div class="hint">aistudio.google.com 에서 발급</div>
+
+      <label>모델</label>
+      <select id="model">
+        <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview (Nano Banana Pro · 고품질)</option>
+        <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview (Nano Banana 2)</option>
+        <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (Nano Banana)</option>
+      </select>
+
+      <label>이미지 (첫 장 = 원본, 이후 = reference 원단/캐릭터)</label>
+      <input type="file" id="imageFile" accept="image/*" multiple>
+      <div id="imgHint" class="hint"></div>
+      <div id="thumbs" class="thumbs"></div>
+
+      <label>프롬프트</label>
+      <textarea id="prompt">Convert this 3D-rendered fashion avatar into a photorealistic studio photograph of a real human female model.
+
+KEEP EXACTLY THE SAME: the standing pose with arms relaxed at the sides, the full-body frontal framing, the garment shapes and proportions, all colors, and the wooden plank wall/floor background.
+
+RENDER PHOTOREALISTICALLY:
+- natural skin with pores and subtle texture, realistic blonde bob hair with individual strands
+- brown waffle-knit oversized hoodie: visible waffle weave, ribbed cuffs and hem, real drawstrings, soft cotton sheen
+- indigo wide-leg denim jeans: visible twill weave, fabric folds, light grey turn-up cuffs
+- white leather low-top sneakers
+- soft natural indoor lighting, realistic contact shadows on the floor, shallow depth of field, 85mm lens look
+
+AVOID: CGI, plastic skin, mannequin look, cartoon or 3D-render appearance, over-smoothed surfaces.</textarea>
+
+      <!-- A. 출력 -->
+      <div class="section-title">A. 출력 (모델별 자동 제한)</div>
+      <div class="row">
+        <div>
+          <label>aspectRatio</label>
+          <select id="aspectRatio"></select>
+        </div>
+        <div>
+          <label>imageSize</label>
+          <select id="imageSize"></select>
+          <div id="imageSizeHint" class="hint"></div>
+        </div>
+      </div>
+      <div class="chk">
+        <input type="checkbox" id="imageOnly">
+        <label for="imageOnly">responseModalities = ["IMAGE"] (텍스트 응답 제외)</label>
+      </div>
+
+      <!-- B. 디테일/추론 -->
+      <div class="section-title">B. 디테일 / 추론 품질</div>
+      <div class="row">
+        <div>
+          <label>mediaResolution <span class="hint">(입력 이미지 인식 디테일)</span></label>
+          <select id="mediaResolution">
+            <option value="">기본(미설정)</option>
+            <option value="MEDIA_RESOLUTION_LOW">LOW</option>
+            <option value="MEDIA_RESOLUTION_MEDIUM">MEDIUM</option>
+            <option value="MEDIA_RESOLUTION_HIGH" selected>HIGH</option>
+            <option value="MEDIA_RESOLUTION_ULTRA_HIGH">ULTRA_HIGH</option>
+          </select>
+        </div>
+        <div>
+          <label>thinkingLevel</label>
+          <select id="thinkingLevel">
+            <option value="">없음</option>
+            <option value="minimal">minimal</option>
+            <option value="high" selected>high</option>
+          </select>
+          <div id="thinkingHint" class="hint"></div>
+        </div>
+      </div>
+      <div class="chk">
+        <input type="checkbox" id="includeThoughts">
+        <label for="includeThoughts">includeThoughts (사고 과정 반환 · 품질엔 영향 없음)</label>
+      </div>
+
+      <!-- D. 그라운딩 -->
+      <div class="section-title">D. 검색 그라운딩</div>
+      <div class="chk">
+        <input type="checkbox" id="googleSearch">
+        <label for="googleSearch">tools: google_search (실제 reference로 사실성 보강)</label>
+      </div>
+      <div id="searchHint" class="hint"></div>
+      <div id="searchTypesWrap" style="display:none; margin-left:24px;">
+        <div class="chk"><input type="checkbox" id="webSearch" checked><label for="webSearch">webSearch</label></div>
+        <div class="chk"><input type="checkbox" id="imageSearch" checked><label for="imageSearch">imageSearch</label></div>
+        <div class="warn">searchTypes JSON 위치는 문서상 미확정 — 400 나면 알려주세요</div>
+      </div>
+
+      <!-- E. 일반 (효과 미확인) -->
+      <div class="section-title">E. 일반 GenerationConfig <span class="warn">— 이미지 영향 문서 미확인</span></div>
+      <div class="row">
+        <div>
+          <label>temperature</label>
+          <input type="number" id="temperature" value="" step="0.1" min="0" max="2" placeholder="비움=기본">
+        </div>
+        <div>
+          <label>seed</label>
+          <input type="number" id="seed" value="" placeholder="비움=랜덤">
+        </div>
+        <div>
+          <label>candidateCount</label>
+          <input type="number" id="candidateCount" value="" min="1" max="4" placeholder="비움=1">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>topP</label>
+          <input type="number" id="topP" value="" step="0.05" min="0" max="1" placeholder="비움=기본">
+        </div>
+        <div>
+          <label>topK</label>
+          <input type="number" id="topK" value="" min="1" placeholder="비움=기본">
+        </div>
+      </div>
+
+      <!-- F. 요청 레벨 (품질 레버 아님 · 보조) -->
+      <div class="section-title">F. 요청 레벨 <span class="warn">— 품질 레버 아님 · 보조용</span></div>
+      <label>systemInstruction (선택 · 텍스트 전용)</label>
+      <textarea id="systemInstruction" style="min-height:60px" placeholder="예: Always render photorealistic results."></textarea>
+      <div class="chk">
+        <input type="checkbox" id="relaxSafety">
+        <label for="relaxSafety">safetySettings 최소화 (BLOCK_NONE · 인물 차단 회피용)</label>
+      </div>
+
+      <button id="run">실사화 변환</button>
+    </div>
+
+    <!-- 결과 -->
+    <div class="card">
+      <label>결과</label>
+      <div id="result" class="result-box">여기에 변환 결과가 표시됩니다</div>
+      <div id="error" class="err"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// 모델별 제약 (공식 문서 기준)
+const MODEL_CONFIG = {
+  'gemini-3-pro-image-preview': {
+    imageSizes: ['1K', '2K', '4K'],
+    aspectRatios: ['1:1','2:3','3:2','3:4','4:3','4:5','5:4','9:16','16:9','21:9'],
+    thinking: true, search: true, searchTypes: false
+  },
+  'gemini-3.1-flash-image-preview': {
+    imageSizes: ['512', '1K', '2K', '4K'],
+    aspectRatios: ['1:1','2:3','3:2','3:4','4:3','4:5','5:4','9:16','16:9','21:9','1:4','4:1','1:8','8:1'],
+    thinking: true, search: true, searchTypes: true
+  },
+  'gemini-2.5-flash-image': {
+    imageSizes: null, // 1024 고정, 설정 불가
+    aspectRatios: ['1:1','2:3','3:2','3:4','4:3','4:5','5:4','9:16','16:9','21:9'],
+    thinking: false, search: false, searchTypes: false
+  }
+};
+
+function fillSelect(el, values, preferred) {
+  const prev = el.value;
+  el.innerHTML = '';
+  values.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o); });
+  el.value = values.includes(prev) ? prev : (values.includes(preferred) ? preferred : values[0]);
+}
+
+function applyModelConstraints() {
+  const cfg = MODEL_CONFIG[$('model').value];
+
+  // aspectRatio
+  fillSelect($('aspectRatio'), cfg.aspectRatios, '1:1');
+
+  // imageSize (2.5-flash는 고정 1024)
+  if (cfg.imageSizes) {
+    $('imageSize').disabled = false;
+    fillSelect($('imageSize'), cfg.imageSizes, '2K');
+    $('imageSizeHint').textContent = '';
+  } else {
+    $('imageSize').innerHTML = '<option>1024 (고정)</option>';
+    $('imageSize').disabled = true;
+    $('imageSizeHint').textContent = '이 모델은 해상도 설정 불가 (1024 고정)';
+  }
+
+  // thinkingLevel / includeThoughts
+  $('thinkingLevel').disabled = !cfg.thinking;
+  $('includeThoughts').disabled = !cfg.thinking;
+  if (!cfg.thinking) $('includeThoughts').checked = false;
+  $('thinkingHint').textContent = cfg.thinking ? '' : '이 모델은 thinking 미지원 (전송 안 함)';
+
+  // google_search
+  $('googleSearch').disabled = !cfg.search;
+  if (!cfg.search) $('googleSearch').checked = false;
+  $('searchHint').textContent = cfg.search ? '' : '이 모델은 검색 그라운딩 미지원';
+  updateSearchTypes();
+}
+function updateSearchTypes() {
+  const cfg = MODEL_CONFIG[$('model').value];
+  $('searchTypesWrap').style.display = (cfg.searchTypes && $('googleSearch').checked) ? 'block' : 'none';
+}
+$('model').addEventListener('change', applyModelConstraints);
+$('googleSearch').addEventListener('change', updateSearchTypes);
+
+// API 키 기억
+$('apiKey').value = localStorage.getItem('gemini_key') || '';
+$('apiKey').addEventListener('input', e => localStorage.setItem('gemini_key', e.target.value));
+
+// 다중 이미지 (첫 장 = 원본, 이후 = reference)
+let images = []; // [{mime, base64}]
+$('imageFile').addEventListener('change', e => {
+  images = [];
+  $('thumbs').innerHTML = '';
+  const files = [...e.target.files];
+  $('imgHint').textContent = files.length ? `${files.length}장 (1번=원본, 나머지=reference)` : '';
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      images.push({ mime: file.type, base64: dataUrl.split(',')[1] });
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      $('thumbs').appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+$('run').addEventListener('click', async () => {
+  const key = $('apiKey').value.trim();
+  const model = $('model').value;
+  const cfg = MODEL_CONFIG[model];
+  if (!key) return showError('API 키를 입력하세요.');
+  if (!images.length) return showError('이미지를 업로드하세요.');
+
+  $('error').textContent = '';
+  $('result').innerHTML = '변환 중... (Pro 모델은 수십 초 걸릴 수 있습니다)';
+  $('run').disabled = true;
+
+  // generationConfig 조립 — 선택 모델이 지원하는 것만
+  const generationConfig = {
+    responseModalities: $('imageOnly').checked ? ['IMAGE'] : ['TEXT', 'IMAGE']
+  };
+  const imageConfig = { aspectRatio: $('aspectRatio').value };
+  if (cfg.imageSizes) imageConfig.imageSize = $('imageSize').value;
+  generationConfig.imageConfig = imageConfig;
+
+  if ($('mediaResolution').value) generationConfig.mediaResolution = $('mediaResolution').value;
+  if (cfg.thinking && ($('thinkingLevel').value || $('includeThoughts').checked)) {
+    generationConfig.thinkingConfig = {};
+    if ($('thinkingLevel').value) generationConfig.thinkingConfig.thinkingLevel = $('thinkingLevel').value;
+    if ($('includeThoughts').checked) generationConfig.thinkingConfig.includeThoughts = true;
+  }
+
+  const temp = $('temperature').value.trim(); if (temp !== '') generationConfig.temperature = parseFloat(temp);
+  const seedV = $('seed').value.trim();        if (seedV !== '') generationConfig.seed = parseInt(seedV, 10);
+  const cc = $('candidateCount').value.trim();  if (cc !== '') generationConfig.candidateCount = parseInt(cc, 10);
+  const tp = $('topP').value.trim();            if (tp !== '') generationConfig.topP = parseFloat(tp);
+  const tk = $('topK').value.trim();            if (tk !== '') generationConfig.topK = parseInt(tk, 10);
+
+  const parts = images.map(im => ({ inlineData: { mimeType: im.mime, data: im.base64 } }));
+  parts.push({ text: $('prompt').value });
+
+  const body = { contents: [{ role: 'user', parts }], generationConfig };
+
+  // tools: google_search (+ searchTypes는 3.1-flash 전용 · 위치 미확정)
+  if (cfg.search && $('googleSearch').checked) {
+    const gs = {};
+    if (cfg.searchTypes) {
+      const st = {};
+      if ($('webSearch').checked) st.webSearch = {};
+      if ($('imageSearch').checked) st.imageSearch = {};
+      if (Object.keys(st).length) gs.searchTypes = st;
+    }
+    body.tools = [{ google_search: gs }];
+  }
+
+  // systemInstruction (텍스트 전용)
+  const sys = $('systemInstruction').value.trim();
+  if (sys) body.systemInstruction = { parts: [{ text: sys }] };
+
+  // safetySettings 최소화
+  if ($('relaxSafety').checked) {
+    body.safetySettings = [
+      'HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH',
+      'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT'
+    ].map(category => ({ category, threshold: 'BLOCK_NONE' }));
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+    const json = await res.json();
+    if (!res.ok) { showError('API 오류 ' + res.status + '\n' + JSON.stringify(json.error || json, null, 2)); $('result').innerHTML = '결과 없음'; return; }
+
+    const imgs = [];
+    let txt = '';
+    (json.candidates || []).forEach(c => (c.content?.parts || []).forEach(p => {
+      if (p.inlineData) imgs.push(p.inlineData);
+      else if (p.text) txt += p.text + '\n';
+    }));
+
+    if (imgs.length) {
+      $('result').innerHTML = '<div style="width:100%">' + imgs.map((im, i) => {
+        const url = `data:${im.mimeType};base64,${im.data}`;
+        return `<img src="${url}" class="preview"><a class="dl" href="${url}" download="result_${i + 1}.png">결과 ${i + 1} 다운로드</a>`;
+      }).join('') + '</div>';
+    } else {
+      const reason = json?.candidates?.[0]?.finishReason || '이미지 없음';
+      showError('이미지가 반환되지 않았습니다 (' + reason + ').\n' + (txt || JSON.stringify(json, null, 2)));
+      $('result').innerHTML = '결과 없음';
+    }
+  } catch (e) {
+    showError('요청 실패: ' + e.message);
+    $('result').innerHTML = '결과 없음';
+  } finally {
+    $('run').disabled = false;
+  }
+});
+
+function showError(msg) { $('error').textContent = msg; }
+
+// 초기화
+applyModelConstraints();
+</script>
+</body>
+</html>
