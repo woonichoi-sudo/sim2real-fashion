@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Grounding with Google Search - Gemini API</title></head>
+<body>
+<h1>Grounding with Google Search</h1>
+
+<p>This documentation page describes how to use Google Search grounding with the Gemini API to enhance response accuracy and provide source citations.</p>
+
+<h2>Key Capabilities</h2>
+<ul>
+  <li>Increase factual accuracy: Reduce model hallucinations by basing responses on real-world information</li>
+  <li>Access current information beyond the model's training data</li>
+  <li>Generate citations linking claims to verifiable sources</li>
+</ul>
+
+<h2>How Grounding with Google Search Works</h2>
+
+<p>When enabled, the <code>google_search</code> tool automates a five-step workflow:</p>
+<ol>
+  <li>User submits a prompt with the tool enabled</li>
+  <li>Model analyzes whether search would improve the answer</li>
+  <li>Model executes one or more search queries automatically</li>
+  <li>Search results are processed and synthesized</li>
+  <li>Response returned with grounding metadata including queries, results, and citations</li>
+</ol>
+
+<h2>Code Examples</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="What's the current price of Google stock?",
+    config=types.GenerateContentConfig(
+        tools=[types.Tool(google_search=types.GoogleSearch())]
+    )
+)
+print(response.text)
+</code></pre>
+
+<h3>JavaScript</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
+const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: "What's the current price of Google stock?",
+    config: {
+        tools: [{ googleSearch: {} }]
+    }
+});
+console.log(response.text);
+</code></pre>
+
+<h3>REST</h3>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent
+
+{
+  "contents": [{"parts": [{"text": "What's the current price of Google stock?"}]}],
+  "tools": [{"google_search": {}}]
+}
+</code></pre>
+
+<div style="border-left:4px solid #f90; padding:8px 12px; margin:12px 0; background:#fff8e6;">
+<strong>[프로젝트 노트 — 미검증]</strong><br>
+<code>searchTypes</code> (값: <code>webSearch</code> / <code>imageSearch</code>)는 <code>gemini-3.1-flash-image</code> 전용 검색 그라운딩 확장으로 추정됨. 단, 요청 JSON 내 정확한 위치/스키마는 공식 문서에서 확인되지 않음(미확정). 사용 전 실제 API 응답으로 검증 필요.
+</div>
+
+<h2>Understanding the Grounding Response</h2>
+
+<p>Successful grounded responses include <code>groundingMetadata</code> containing:</p>
+<ul>
+  <li><code>webSearchQueries</code>: Array of search terms used</li>
+  <li><code>searchEntryPoint</code>: HTML/CSS for search widget rendering</li>
+  <li><code>groundingChunks</code>: Web sources with URI and title</li>
+  <li><code>groundingSupports</code>: Links between text segments and source indices</li>
+</ul>
+
+<pre><code># Accessing grounding metadata (Python)
+metadata = response.candidates[0].grounding_metadata
+print(metadata.web_search_queries)
+for chunk in metadata.grounding_chunks:
+    print(chunk.web.uri, chunk.web.title)
+</code></pre>
+
+<h2>Attributing Sources with Inline Citations</h2>
+
+<p>Creating inline citations from metadata:</p>
+<ol>
+  <li>Extract supports and chunks from <code>groundingMetadata</code></li>
+  <li>Sort supports by <code>end_index</code> (descending)</li>
+  <li>Create markdown-style links: <code>[index](uri)</code></li>
+  <li>Insert citations at segment endpoints in the response text</li>
+</ol>
+
+<pre><code>def add_citations(response):
+    text = response.candidates[0].content.parts[0].text
+    supports = response.candidates[0].grounding_metadata.grounding_supports
+    chunks = response.candidates[0].grounding_metadata.grounding_chunks
+
+    # Sort supports by end_index descending to insert from end
+    sorted_supports = sorted(supports, key=lambda s: s.segment.end_index, reverse=True)
+
+    for support in sorted_supports:
+        end = support.segment.end_index
+        citations = "".join(
+            f"[{i+1}]({chunks[i].web.uri})"
+            for i in support.grounding_chunk_indices
+        )
+        text = text[:end] + citations + text[end:]
+    return text
+</code></pre>
+
+<h2>Pricing</h2>
+<ul>
+  <li>For Gemini 3 models: billed for each search query that the model decides to execute. Multiple queries within a single request count separately; empty queries are ignored.</li>
+  <li>For Gemini 2.5 and older models: billed per prompt (not per query)</li>
+</ul>
+
+<h2>Supported Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Supported</th></tr>
+  <tr><td>Gemini 3.5 Flash</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Flash-Lite</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Flash Image Preview</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Pro Preview</td><td>Yes</td></tr>
+  <tr><td>Gemini 3 Pro / Flash / Flash-Lite Preview</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Pro / Flash / Flash-Lite</td><td>Yes (use <code>google_search_retrieval</code> tool)</td></tr>
+  <tr><td>Gemini 2.0 Flash</td><td>Yes (use <code>google_search_retrieval</code> tool)</td></tr>
+</table>
+
+<p><strong>Note:</strong> Older models (2.5 and earlier) require the <code>google_search_retrieval</code> tool instead of <code>google_search</code>.</p>
+
+<h2>Supported Tool Combinations</h2>
+<p>Google Search grounding can be combined with:</p>
+<ul>
+  <li>Code execution</li>
+  <li>URL context tools</li>
+  <li>Custom function calling (Gemini 3 models)</li>
+</ul>
+</body>
+</html>

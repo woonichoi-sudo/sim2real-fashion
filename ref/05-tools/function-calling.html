@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Function Calling - Gemini API</title></head>
+<body>
+<h1>Function Calling with the Gemini API</h1>
+
+<p>Function calling allows the Gemini model to determine when to invoke specific functions and provide necessary parameters, acting as a bridge between natural language and real-world actions.</p>
+
+<h2>Core Use Cases</h2>
+<ul>
+  <li>Augmenting knowledge via external sources</li>
+  <li>Extending model capabilities with tools</li>
+  <li>Taking real-world actions through APIs</li>
+</ul>
+
+<h2>How Function Calling Works (Four-Step Flow)</h2>
+<ol>
+  <li><strong>Define function declarations</strong> describing name, parameters, and purpose</li>
+  <li><strong>Call API</strong> with user prompt and function declarations — model responds with structured JSON</li>
+  <li><strong>Execute function</strong> in your application code (the model does not execute it)</li>
+  <li><strong>Return results</strong> to the model for generating a user-friendly response</li>
+</ol>
+
+<h2>Function Declaration Structure</h2>
+<pre><code>{
+  "name": "function_name",
+  "description": "Clear explanation of purpose with examples",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "param_name": {
+        "type": "string",
+        "description": "Parameter purpose",
+        "enum": ["optional", "fixed", "values"]
+      }
+    },
+    "required": ["mandatory_params"]
+  }
+}
+</code></pre>
+
+<p>Key declaration fields:</p>
+<ul>
+  <li><code>name</code>: Unique identifier (use underscores or camelCase; no spaces/periods/dashes)</li>
+  <li><code>description</code>: Detailed explanation with examples and format hints (e.g., "San Francisco, CA" or "95616")</li>
+  <li><code>parameters.type</code>: Data structure type</li>
+  <li><code>parameters.properties</code>: Individual parameter definitions</li>
+  <li><code>parameters.required</code>: Mandatory parameter array</li>
+  <li><code>enum</code>: Fixed value constraints (improves accuracy — use instead of just describing limited values)</li>
+</ul>
+
+<h2>Python Code Example</h2>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+def get_weather(location: str) -> str:
+    # Your actual implementation here
+    return f"The weather in {location} is sunny, 25°C"
+
+tools = [
+    types.Tool(function_declarations=[{
+        "name": "get_weather",
+        "description": "Get current weather for a location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "City and state, e.g. 'San Francisco, CA'"
+                }
+            },
+            "required": ["location"]
+        }
+    }])
+]
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="What's the weather in Tokyo?",
+    config=types.GenerateContentConfig(tools=tools)
+)
+
+# Check if model wants to call a function
+if response.candidates[0].content.parts[0].function_call:
+    fc = response.candidates[0].content.parts[0].function_call
+    # fc.name = "get_weather"
+    # fc.args = {"location": "Tokyo"}
+    # fc.id = unique identifier (Gemini 3+)
+
+    result = get_weather(**fc.args)
+
+    # Return result to the model (include the id for Gemini 3)
+    response2 = client.models.generate_content(
+        model="gemini-3.5-flash",
+        contents=[
+            {"role": "user", "parts": [{"text": "What's the weather in Tokyo?"}]},
+            {"role": "model", "parts": [{"function_call": {"name": fc.name, "args": fc.args, "id": fc.id}}]},
+            {"role": "user", "parts": [{"function_response": {"name": fc.name, "response": {"result": result}, "id": fc.id}}]}
+        ]
+    )
+    print(response2.text)
+</code></pre>
+
+<h2>Unique IDs (Gemini 3+)</h2>
+<p>Gemini 3 models always return a unique <code>id</code> with every <code>functionCall</code>. You must include this exact ID in your <code>functionResponse</code> for accurate mapping. This is critical for parallel function calling.</p>
+
+<h2>Function Calling Modes</h2>
+
+<table border="1">
+  <tr><th>Mode</th><th>Behavior</th></tr>
+  <tr><td><strong>AUTO</strong></td><td>Default; model chooses between function calls or natural text response</td></tr>
+  <tr><td><strong>ANY</strong></td><td>Model always predicts a function call; ensures schema adherence</td></tr>
+  <tr><td><strong>VALIDATED</strong></td><td>Default for tool combinations; constrains to valid outputs</td></tr>
+  <tr><td><strong>NONE</strong></td><td>Prohibits function calling entirely</td></tr>
+</table>
+
+<pre><code>tool_config = types.ToolConfig(
+    function_calling_config=types.FunctionCallingConfig(
+        mode="ANY",
+        allowed_function_names=["function1", "function2"]
+    )
+)
+</code></pre>
+
+<h3>allowedFunctionNames (toolConfig.functionCallingConfig)</h3>
+<p>The <code>allowedFunctionNames</code> parameter restricts which functions the model may select when making function calls — it acts as a filter over the available function declarations. When omitted, the model can choose from all available declarations; when provided, the model's choices are narrowed to only the listed functions.</p>
+<ul>
+  <li><strong>ANY mode:</strong> if <code>allowedFunctionNames</code> is provided as a list, the model can only choose from the functions in that list.</li>
+  <li><strong>VALIDATED mode:</strong> if <code>allowedFunctionNames</code> is provided, the model picks from the set of allowed functions.</li>
+</ul>
+<p>This is most commonly used with mode <code>ANY</code> to force a call to one of a specific subset of functions. (In the Python SDK, the field is <code>allowed_function_names</code>, as shown above.)</p>
+
+<h2>Parallel Function Calling</h2>
+<p>Enables multiple simultaneous function executions when dependencies don't exist. The API maps results to calls using the <code>id</code> field.</p>
+<p>Key advantage: "You don't need to return the <code>function_result</code> objects in the same order that the <code>function_call</code> objects were received."</p>
+
+<h2>Compositional (Sequential) Function Calling</h2>
+<p>Allows chaining multiple functions sequentially. Example: first calling <code>get_current_location()</code>, then <code>get_weather()</code> using the location result. The Live API natively supports compositional calling without manual execution loops.</p>
+
+<h2>Automatic Function Calling (Python SDK Only)</h2>
+<p>Pass Python functions directly; the SDK automatically converts them to declarations, detects calls, executes functions, and sends results back.</p>
+<p>Requirements: type hints and Google-style docstrings.</p>
+<p>Allowed parameter types: <code>int</code>, <code>float</code>, <code>bool</code>, <code>str</code>, <code>list</code>, and Pydantic <code>BaseModel</code></p>
+
+<pre><code>def get_weather(location: str) -> str:
+    """Get current weather for a location.
+
+    Args:
+        location: City and state, e.g. 'San Francisco, CA'
+    Returns:
+        Weather description string
+    """
+    return f"Sunny, 25°C in {location}"
+
+# SDK automatically handles function calling
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="What's the weather in Tokyo?",
+    config=types.GenerateContentConfig(tools=[get_weather])
+)
+
+# Disable automatic calling if needed:
+# automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)
+</code></pre>
+
+<h2>Multimodal Function Responses (Gemini 3)</h2>
+<p>Supports nested multimodal content within <code>functionResponse</code>:</p>
+<ul>
+  <li>Image formats: PNG, JPEG, WebP</li>
+  <li>Document formats: PDF, plain text</li>
+</ul>
+<p>Reference multimodal parts using <code>{"$ref": "displayName"}</code> in the structured response field.</p>
+
+<h2>Model Context Protocol (MCP)</h2>
+<p>Experimental feature in Python and JavaScript SDKs:</p>
+<ul>
+  <li>Python: automatic tool calling via <code>ClientSession</code></li>
+  <li>JavaScript: via <code>mcpToTool()</code> function</li>
+  <li>Supports tools only (not resources or prompts)</li>
+  <li>Disable automatic calling with <code>automatic_function_calling</code> config</li>
+  <li>Breaking changes possible in future releases</li>
+</ul>
+
+<h2>Multi-Tool Use (Tool Combination)</h2>
+<p>Gemini 3 models can combine built-in tools with custom function declarations. Set:</p>
+<pre><code>include_server_side_tool_invocations=True</code></pre>
+<p>when mixing Google Search with custom functions.</p>
+
+<h2>Thought Signatures (Gemini 3 with Thinking)</h2>
+<p>For models with thinking enabled, signatures maintain context across turns. The SDKs handle this automatically. Manual manipulation requires:</p>
+<ul>
+  <li>Always sending <code>thought_signature</code> back in the original <code>Part</code></li>
+  <li>Including exact function call <code>id</code> in <code>function_response</code></li>
+  <li>Never merging signature-containing parts</li>
+</ul>
+
+<h2>Supported Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Function Calling</th><th>Parallel</th><th>Compositional</th></tr>
+  <tr><td>Gemini 3.1 Pro Preview</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Flash-Lite</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.5 Flash</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Pro</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Flash</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.0 Flash</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+</table>
+
+<h2>Best Practices</h2>
+<ol>
+  <li><strong>Descriptions:</strong> Be extremely clear and specific; include examples and format hints</li>
+  <li><strong>Naming:</strong> Descriptive names without spaces, periods, or dashes</li>
+  <li><strong>Strong typing:</strong> Use specific types and <code>enum</code> for fixed value sets</li>
+  <li><strong>Tool selection:</strong> Limit to 10–20 active tools; use dynamic selection for large tool sets</li>
+  <li><strong>Prompt engineering:</strong> Provide role context, usage instructions, encourage clarification</li>
+  <li><strong>Temperature:</strong> Use low values (0.0) for deterministic calls; Gemini 3 recommends keeping default 1.0</li>
+  <li><strong>Validation:</strong> Confirm high-consequence calls before execution</li>
+  <li><strong>Error handling:</strong> Return informative error messages in function responses</li>
+  <li><strong>Security:</strong> Use proper authentication; avoid exposing sensitive data in declarations</li>
+  <li><strong>Check finish reason:</strong> Always validate <code>finishReason</code> in responses</li>
+  <li><strong>Token limits:</strong> Function descriptions count toward input token limits</li>
+</ol>
+
+<h2>Notes and Limitations</h2>
+<ul>
+  <li>Uses OpenAPI schema subset only (not full specification)</li>
+  <li>Very large or deeply nested schemas may be rejected in ANY mode</li>
+  <li>Don't assume <code>functionCall</code> is last in parts array when mixing tools</li>
+  <li>Automatic function calling is a Python SDK feature only</li>
+  <li>Python parameter type support is limited to basic types and Pydantic BaseModel</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Interactions API - Gemini API</title></head>
+<body>
+<h1>Interactions API Overview</h1>
+
+<p>The <strong>Interactions API</strong> is Google's newer approach to accessing Gemini models, positioned as an upgrade from the classic <code>generateContent</code> API. It remains in <strong>beta</strong> stage.</p>
+
+<h2>Core Benefits</h2>
+<ul>
+  <li><strong>Server-side history management</strong>: <code>previous_interaction_id</code>를 통해 단순화된 다중 턴 흐름 구현. Developers can reference previous conversations rather than resending full chat histories.</li>
+  <li><strong>Observable execution steps</strong>: 디버깅과 UI 렌더링을 위한 타입화된 단계별 추적</li>
+  <li><strong>Built for agentic workflows</strong>: Native support for multi-step tool use, orchestration, and complex reasoning flows.</li>
+  <li><strong>Long-running and background tasks</strong>: <code>background=true</code>로 Deep Think/Deep Research 작업 백그라운드 처리</li>
+</ul>
+
+<h2>Core Resource: Interaction Object</h2>
+<p>An Interaction represents "a complete turn in a conversation or task" and contains a time-ordered sequence of execution steps.</p>
+
+<h2>SDK Convenience Properties</h2>
+<table border="1">
+  <tr><th>Property</th><th>Return Type</th><th>Description</th></tr>
+  <tr><td><code>interaction.output_text</code></td><td>String</td><td>Returns the last text block</td></tr>
+  <tr><td><code>interaction.output_image</code></td><td>ImageContent</td><td>Returns the last generated image</td></tr>
+  <tr><td><code>interaction.output_audio</code></td><td>AudioContent</td><td>Returns the last generated audio</td></tr>
+</table>
+
+<h2>SDK Support</h2>
+<ul>
+  <li>Python: <code>google-genai</code> v1.55.0+</li>
+  <li>JavaScript: <code>@google/genai</code> v1.33.0+</li>
+</ul>
+
+<h2>Supported Models</h2>
+<p>Gemini 3.5 Flash, 3.1 Pro Preview, 2.5 Pro/Flash, Deep Research agents, and others.</p>
+
+<h2>Data Retention</h2>
+<p>By default, interactions are stored with retention periods based on tier:</p>
+<ul>
+  <li>Paid users: 55 days</li>
+  <li>Free tier: 1 day</li>
+</ul>
+<p>Users can opt out via <code>store=false</code>, though this prevents background execution and server-side state features.</p>
+
+<h2>Current Status and Limitations</h2>
+<p>The API remains in beta, with breaking changes possible. Features "not yet available" in Interactions API (available in generateContent):</p>
+<ul>
+  <li>Video metadata</li>
+  <li>Batch API</li>
+  <li>Explicit caching (implicit caching is supported)</li>
+</ul>
+<p>For production workloads, the established <code>generateContent</code> API remains recommended.</p>
+
+<p>The page emphasizes this is suited for new projects and agentic workflows, while existing stable integrations can continue using the original API.</p>
+
+<hr>
+
+<h1>streamGenerateContent (스트리밍 생성)</h1>
+
+<p><code>streamGenerateContent</code>는 <code>generateContent</code>의 스트리밍 변형으로, 응답이 완전히 생성될 때까지 기다리지 않고 생성되는 대로 <strong>증분(incremental)</strong> 청크를 받아 실시간 출력을 구현합니다.</p>
+
+<h2>Endpoint</h2>
+<p>HTTP 메서드와 경로:</p>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent</code></pre>
+<p>마스터 문서 §13 기준 경로: <code>POST /v1beta/models/{model}:streamGenerateContent</code>. SSE 형식으로 받으려면 쿼리 파라미터 <code>alt=sse</code>를 추가합니다 (예: <code>...:streamGenerateContent?alt=sse</code>).</p>
+
+<h2>Request Body</h2>
+<p>요청 본문 구조는 <code>generateContent</code>와 <strong>동일</strong>합니다. 공식 문서 기준 동일 필드:</p>
+<ul>
+  <li><code>contents[]</code></li>
+  <li><code>tools[]</code></li>
+  <li><code>toolConfig</code></li>
+  <li><code>safetySettings[]</code></li>
+  <li><code>systemInstruction</code></li>
+  <li><code>generationConfig</code></li>
+  <li><code>cachedContent</code></li>
+  <li><code>serviceTier</code></li>
+  <li><code>store</code></li>
+</ul>
+
+<h2>Response Format (SSE)</h2>
+<p>성공 시 응답 본문은 <strong>Server-Sent Events(SSE)</strong> 스트림으로, <code>GenerateContentResponse</code> 인스턴스가 생성되는 순서대로 증분 전달됩니다. 공식 문서 원문: <em>"If successful, the response body contains a stream of <code>GenerateContentResponse</code> instances."</em></p>
+
+<h3>REST 예시 (curl)</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}" \
+  --no-buffer \
+  -H 'Content-Type: application/json' \
+  -d '{ "contents": [{ "parts": [{ "text": "Explain how AI works" }] }] }'</code></pre>
+<p><code>--no-buffer</code> 옵션과 <code>alt=sse</code> 파라미터로 SSE 스트리밍을 활성화합니다.</p>
+
+<h3>SDK 예시 (Python)</h3>
+<pre><code>response = client.models.generate_content_stream(
+    model="gemini-3.5-flash",
+    contents=["Explain how AI works"]
+)
+for chunk in response:
+    print(chunk.text, end="")</code></pre>
+<p>SDK에서는 응답 청크를 순회(iterate)하며 도착하는 대로 처리합니다 (전체 생성 완료를 기다리지 않음).</p>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Models Overview</title></head>
+<body>
+<h1>Google Gemini API Models Overview</h1>
+
+<h2>Model Version Name Patterns</h2>
+<ul>
+  <li><strong>Stable:</strong> Points to a specific stable model; stable models usually do not change.</li>
+  <li><strong>Preview:</strong> Preview models; may be production-ready with billing enabled; limited rate limits; minimum 2-week deprecation notice.</li>
+  <li><strong>Latest:</strong> Points to the latest release of a specific model variant; changes with each new release (hot-swapped).</li>
+  <li><strong>Experimental:</strong> Experimental models; not suitable for production; more limited rate limits.</li>
+</ul>
+
+<h2>Gemini 3 Series</h2>
+
+<h3>Gemini 3.1 Pro</h3>
+<p>Advanced intelligence for complex problem-solving tasks.</p>
+
+<h3>Gemini 3.5 Flash</h3>
+<p>Frontier-class performance optimized for agentic and coding tasks. (GA)</p>
+
+<h3>Gemini 3 Flash</h3>
+<p>Fast frontier-class performance.</p>
+
+<h3>Gemini 3.1 Flash-Lite</h3>
+<p>Cost-efficient with frontier-class capabilities, optimized for speed, scale, and cost efficiency. (GA)</p>
+
+<h3>Image Generation Models (Gemini 3 Series)</h3>
+<table border="1">
+  <tr><th>Nickname</th><th>Model Code</th><th>Description</th></tr>
+  <tr><td>Nano Banana 2</td><td><code>gemini-3.1-flash-image</code></td><td>High-efficiency image generation, speed and high-volume use cases (GA)</td></tr>
+  <tr><td>Nano Banana Pro</td><td><code>gemini-3-pro-image</code></td><td>State-of-the-art creation with native image capabilities, professional asset production (GA)</td></tr>
+</table>
+
+<h3>Audio Models (Gemini 3 Series)</h3>
+<table border="1">
+  <tr><th>Model</th><th>Code</th><th>Description</th></tr>
+  <tr><td>Gemini 3.1 Flash Live Preview</td><td><code>gemini-3.1-flash-live-preview</code></td><td>Real-time dialogue (A2A)</td></tr>
+  <tr><td>Gemini 3.1 Flash TTS Preview</td><td><code>gemini-3.1-flash-tts-preview</code></td><td>Speech generation with expressive audio tags</td></tr>
+</table>
+
+<h2>Gemini 2.5 Series</h2>
+
+<h3>Gemini 2.5 Flash</h3>
+<p>Stable version. Adaptive thinking support.</p>
+
+<h3>Gemini 2.5 Flash Image (Nano Banana)</h3>
+<p><code>gemini-2.5-flash-image</code> — Speed and efficiency for image generation. (GA)</p>
+
+<h3>Gemini 2.5 Flash Live Preview</h3>
+<p>Real-time audio/video conversation.</p>
+
+<h3>Gemini 2.5 Flash TTS Preview</h3>
+<p>Text-to-speech.</p>
+
+<h3>Gemini 2.5 Flash-Lite</h3>
+<p>Fast and cost-efficient.</p>
+
+<h3>Gemini 2.5 Pro</h3>
+<p>Stable version. Advanced reasoning with adaptive thinking.</p>
+
+<h3>Gemini 2.5 Pro TTS Preview</h3>
+<p>High-quality text-to-speech.</p>
+
+<h2>Generative Media Models</h2>
+
+<h3>Video</h3>
+<table border="1">
+  <tr><th>Model</th><th>Description</th></tr>
+  <tr><td>Veo 3.1 Preview</td><td>Cinematic video generation with creative controls</td></tr>
+  <tr><td>Veo 3.1 Lite Preview</td><td>Cost-efficient video generation</td></tr>
+</table>
+
+<h3>Image</h3>
+<table border="1">
+  <tr><th>Model</th><th>Description</th></tr>
+  <tr><td>Imagen 4</td><td>High-fidelity image generation from text prompts; includes Ultra, Standard, and Fast variants</td></tr>
+</table>
+
+<h2>Music Generation Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Description</th></tr>
+  <tr><td>Lyria 3 Pro Preview</td><td>Full song music composition</td></tr>
+  <tr><td>Lyria 3 Clip Preview</td><td>30-second music clips</td></tr>
+  <tr><td>Lyria RealTime Experimental</td><td>Real-time music generation</td></tr>
+</table>
+
+<h2>Tool and Agent Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Description</th></tr>
+  <tr><td>Computer Use Preview</td><td>UI automation (computer use)</td></tr>
+  <tr><td>Gemini Deep Research Preview</td><td>Autonomous multi-step research</td></tr>
+  <tr><td>Gemini Deep Research Max Preview</td><td>Maximum comprehensiveness research</td></tr>
+  <tr><td>Antigravity Agent Preview</td><td>General-purpose autonomous tasks in Linux sandbox</td></tr>
+</table>
+
+<h2>Specialized Task Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Code</th><th>Description</th></tr>
+  <tr><td>Gemini Embedding 2</td><td><code>gemini-embedding-2</code></td><td>Multimodal embedding (text, images, video, audio, PDF) (GA)</td></tr>
+  <tr><td>Gemini Embedding</td><td><code>gemini-embedding-001</code></td><td>Text embedding (stable)</td></tr>
+  <tr><td>Gemini Robotics-ER 1.6 Preview</td><td><code>gemini-robotics-er-1.6-preview</code></td><td>Robotics embodied reasoning</td></tr>
+</table>
+
+<h2>Deprecated / Previous Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Status</th></tr>
+  <tr><td>Gemini 2.0 Flash (<code>gemini-2.0-flash</code>, <code>gemini-2.0-flash-001</code>)</td><td>Deprecated — shutdown June 1, 2026</td></tr>
+  <tr><td>Gemini 2.0 Flash-Lite (<code>gemini-2.0-flash-lite</code>, <code>gemini-2.0-flash-lite-001</code>)</td><td>Deprecated — shutdown June 1, 2026</td></tr>
+  <tr><td>Gemini 3.1 Flash-Lite Preview</td><td>Shut down May 25, 2026</td></tr>
+  <tr><td>Gemini 3 Pro Preview</td><td>Shut down (redirects to gemini-3.1-pro-preview)</td></tr>
+  <tr><td>Gemini 1.5 Pro, Flash, Flash-8B</td><td>Shut down September 29, 2025</td></tr>
+</table>
+
+<p>For the complete deprecation timeline, refer to the Model Deprecations page.</p>
+
+<hr>
+<p><em>Source: https://ai.google.dev/gemini-api/docs/models — Fetched 2026-05-29</em></p>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Vision (Image Understanding) - Gemini API</title></head>
+<body>
+<h1>Image Understanding with Gemini API</h1>
+
+<p>Google's Gemini models support multimodal image processing for tasks including image captioning, classification, and visual question answering without having to train specialized ML models.</p>
+
+<h2>Passing Images to Gemini</h2>
+
+<h3>Method 1: Inline Image Data</h3>
+<p>Suitable for smaller files (under 20 MB total request size). Supports Base64 encoding or direct local file reading.</p>
+
+<h4>Python — Local File</h4>
+<pre><code>from google import genai
+import pathlib
+
+client = genai.Client()
+
+image_path = pathlib.Path("path/to/image.jpg")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[
+        {"mime_type": "image/jpeg", "data": image_path.read_bytes()},
+        "Describe what you see in this image"
+    ]
+)
+print(response.text)
+</code></pre>
+
+<h4>Python — PIL Image</h4>
+<pre><code>from PIL import Image
+from google import genai
+
+client = genai.Client()
+image = Image.open("/path/to/organ.png")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[image, "Tell me about this instrument"]
+)
+print(response.text)
+</code></pre>
+
+<h4>Python — Image from URL (Base64)</h4>
+<pre><code>import requests
+import base64
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+image_url = "https://example.com/image.jpg"
+response = requests.get(image_url)
+image_data = base64.b64encode(response.content).decode("utf-8")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[
+        types.Part.from_bytes(
+            data=base64.b64decode(image_data),
+            mime_type="image/jpeg"
+        ),
+        "Describe this image"
+    ]
+)
+print(response.text)
+</code></pre>
+
+<h4>JavaScript</h4>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+import * as fs from "fs";
+
+const ai = new GoogleGenAI({});
+
+const imageData = fs.readFileSync("path/to/image.jpg");
+const base64Image = imageData.toString("base64");
+
+const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: [
+        {
+            inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Image
+            }
+        },
+        { text: "Describe what you see in this image" }
+    ]
+});
+console.log(response.text);
+</code></pre>
+
+<h4>REST</h4>
+<pre><code>B64_IMAGE=$(base64 -w 0 path/to/image.jpg)
+curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contents": [{
+      "parts": [
+        {"inlineData": {"mimeType": "image/jpeg", "data": "'"${B64_IMAGE}"'"}},
+        {"text": "Describe this image"}
+      ]
+    }]
+  }'
+</code></pre>
+
+<h3>Method 2: File API Upload</h3>
+<p>Recommended for larger files or repeated use of the same image across multiple requests.</p>
+
+<pre><code>from google import genai
+
+client = genai.Client()
+
+uploaded_image = client.files.upload(file="path/to/large_image.jpg")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[uploaded_image, "Analyze this image in detail"]
+)
+print(response.text)
+</code></pre>
+
+<h2>Prompting with Multiple Images</h2>
+
+<pre><code>from google import genai
+
+client = genai.Client()
+
+image1 = open("image1.jpg", "rb").read()
+image2 = open("image2.jpg", "rb").read()
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[
+        {"mime_type": "image/jpeg", "data": image1},
+        {"mime_type": "image/jpeg", "data": image2},
+        "Compare these two images"
+    ]
+)
+print(response.text)
+</code></pre>
+
+<h2>Object Detection</h2>
+
+<p>The model can detect prominent items and return bounding box coordinates normalized to a 0–1000 scale in <code>[ymin, xmin, ymax, xmax]</code> format. Coordinates require descaling based on original image dimensions.</p>
+
+<pre><code>response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[
+        image,
+        "Detect all objects. Return bounding boxes as JSON with format: "
+        "[{\"label\": \"name\", \"box\": [ymin, xmin, ymax, xmax]}]"
+    ]
+)
+
+# Descaling example: if image is 1920x1080
+# actual_ymin = (ymin / 1000) * 1080
+# actual_xmin = (xmin / 1000) * 1920
+</code></pre>
+
+<p>Custom instructions are supported: detecting specific colored objects, applying custom labels, filtering by object type.</p>
+
+<h2>Supported Image Formats</h2>
+
+<table border="1">
+  <tr><th>Format</th><th>MIME Type</th></tr>
+  <tr><td>PNG</td><td><code>image/png</code></td></tr>
+  <tr><td>JPEG</td><td><code>image/jpeg</code></td></tr>
+  <tr><td>WEBP</td><td><code>image/webp</code></td></tr>
+  <tr><td>HEIC</td><td><code>image/heic</code></td></tr>
+  <tr><td>HEIF</td><td><code>image/heif</code></td></tr>
+</table>
+
+<h2>Capabilities</h2>
+<ul>
+  <li>Image captioning</li>
+  <li>Image classification</li>
+  <li>Visual question answering</li>
+  <li>Object detection with bounding boxes</li>
+  <li>Optical character recognition (OCR)</li>
+  <li>Scene understanding</li>
+  <li>Chart and diagram analysis</li>
+  <li>Enhanced accuracy for specific use cases through additional training</li>
+</ul>
+
+<h2>Limitations and Key Technical Information</h2>
+
+<h3>Token Calculation</h3>
+<ul>
+  <li>Images with both dimensions &le;384 pixels: <strong>258 tokens</strong></li>
+  <li>Larger images: divided into 768x768 pixel tiles at <strong>258 tokens each</strong></li>
+  <li>Formula: divide each dimension by crop unit size (roughly <code>floor(min(width, height) / 1.5)</code>)</li>
+  <li>Example: a 960×540 image = 6 tiles = 1,548 tokens</li>
+</ul>
+
+<h3>Media Resolution Parameter</h3>
+<p>The <code>media_resolution</code> parameter controls "the maximum number of tokens allocated per input image or video frame," balancing detail recognition against token usage and latency.</p>
+
+<h3>Limits</h3>
+<ul>
+  <li>Maximum <strong>3,600 image files</strong> per request</li>
+  <li>20 MB inline request size limit</li>
+</ul>
+
+<h2>Tips and Best Practices</h2>
+<ul>
+  <li>Verify correct image rotation before sending</li>
+  <li>Use clear, non-blurry images for best results</li>
+  <li>Place text prompts after image parts in the contents array</li>
+  <li>For very high-resolution images, consider whether full resolution is needed (use <code>media_resolution</code> to control token cost)</li>
+  <li>For repeated analysis of the same image, upload once via File API and reuse the URI</li>
+</ul>
+</body>
+</html>

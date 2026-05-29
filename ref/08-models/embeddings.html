@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Embeddings API Reference - Gemini API</title></head>
+<body>
+<h1>Google Gemini API - Embeddings Reference</h1>
+
+<h2>Overview</h2>
+<p>The Gemini API offers embeddings services that convert text into numerical vectors for clustering, similarity measurement, and information retrieval tasks.</p>
+
+<h2>API Methods</h2>
+
+<h3>1. models.embedContent (Single Embedding)</h3>
+<p><strong>Endpoint</strong>:</p>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:embedContent</code></pre>
+<p><strong>Path Parameter</strong>: <code>model</code> (required) - format: <code>models/{model}</code></p>
+<p><strong>Request Body Fields</strong>:</p>
+<ul>
+  <li><code>content</code> (required): Content object to embed</li>
+  <li><code>taskType</code> (optional, deprecated): TaskType enum value</li>
+  <li><code>title</code> (optional, deprecated): Text title</li>
+  <li><code>outputDimensionality</code> (optional, deprecated): Reduce output embedding dimensions</li>
+  <li><code>embedContentConfig</code> (optional): EmbedContentConfig object</li>
+</ul>
+<p><strong>Response</strong>: EmbedContentResponse object</p>
+
+<h3>2. models.batchEmbedContents (Batch Embedding)</h3>
+<p><strong>Endpoint</strong>:</p>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:batchEmbedContents</code></pre>
+<p><strong>Purpose</strong>: Processes multiple embedding requests simultaneously, accepting a batch of strings and returning embeddings in the same order as input requests.</p>
+<p><strong>Request Body</strong>:</p>
+<ul>
+  <li><code>requests[]</code> (required): Array of EmbedContentRequest objects</li>
+</ul>
+<p><strong>Response Fields</strong>:</p>
+<ul>
+  <li><code>embeddings[]</code>: Array of ContentEmbedding objects</li>
+  <li><code>usageMetadata</code>: EmbeddingUsageMetadata object</li>
+</ul>
+
+<h3>3. models.asyncBatchEmbedContent (Asynchronous Batch)</h3>
+<p><strong>Endpoint</strong>:</p>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/{batch.model=models/*}:asyncBatchEmbedContent</code></pre>
+<p><strong>Purpose</strong>: Enqueues batch embedding requests for asynchronous processing, useful for large-scale operations.</p>
+
+<h2>Data Structures</h2>
+
+<h3>EmbedContentConfig</h3>
+<pre><code>{
+  "title": "string",
+  "taskType": "enum",
+  "autoTruncate": "boolean",
+  "outputDimensionality": "integer",
+  "documentOcr": "boolean",
+  "audioTrackExtraction": "boolean"
+}</code></pre>
+
+<h3>TaskType Enum Values</h3>
+<ul>
+  <li><code>TASK_TYPE_UNSPECIFIED</code></li>
+  <li><code>RETRIEVAL_QUERY</code></li>
+  <li><code>RETRIEVAL_DOCUMENT</code></li>
+  <li><code>SEMANTIC_SIMILARITY</code></li>
+  <li><code>CLASSIFICATION</code></li>
+  <li><code>CLUSTERING</code></li>
+  <li><code>QUESTION_ANSWERING</code></li>
+  <li><code>FACT_VERIFICATION</code></li>
+  <li><code>CODE_RETRIEVAL_QUERY</code></li>
+</ul>
+
+<h3>ContentEmbedding</h3>
+<pre><code>{
+  "values": [number],
+  "shape": [integer]
+}</code></pre>
+
+<h3>EmbeddingUsageMetadata</h3>
+<pre><code>{
+  "promptTokenCount": "integer",
+  "promptTokenDetails": [ModalityTokenCount]
+}</code></pre>
+
+<h3>EmbedContentBatchStats</h3>
+<ul>
+  <li><code>requestCount</code>: Total number of requests in the batch</li>
+  <li><code>successfulRequestCount</code>: Number of successfully processed requests</li>
+  <li><code>failedRequestCount</code>: Number of failed requests</li>
+  <li><code>pendingRequestCount</code>: Number of requests still being processed</li>
+</ul>
+
+<h2>Code Examples</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+text = "Hello World!"
+result = client.models.embed_content(
+    model="gemini-embedding-001",
+    contents=text,
+    config=types.EmbedContentConfig(output_dimensionality=10),
+)
+print(result.embeddings)</code></pre>
+
+<h3>Node.js</h3>
+<pre><code>const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const text = "Hello World!";
+const result = await ai.models.embedContent({
+  model: "gemini-embedding-001",
+  contents: text,
+  config: { outputDimensionality: 10 },
+});
+console.log(result.embeddings);</code></pre>
+
+<h3>Go</h3>
+<pre><code>ctx := context.Background()
+client, err := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey:  os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGeminiAPI,
+})
+
+text := "Hello World!"
+outputDim := int32(10)
+contents := []*genai.Content{
+    genai.NewContentFromText(text, genai.RoleUser),
+}
+result, err := client.Models.EmbedContent(ctx, "gemini-embedding-001",
+    contents, &genai.EmbedContentConfig{
+        OutputDimensionality: &outputDim,
+})
+
+embeddings, _ := json.MarshalIndent(result.Embeddings, "", "  ")
+fmt.Println(string(embeddings))</code></pre>
+
+<h3>Shell/cURL</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent" \
+-H "x-goog-api-key: $GEMINI_API_KEY" \
+-H 'Content-Type: application/json' \
+-d '{"model": "models/gemini-embedding-001",
+     "content": {"parts":[{"text": "What is the meaning of life?"}]}}'</code></pre>
+
+<h2>Batch Processing Example</h2>
+<pre><code>{
+  "requests": [
+    {
+      "model": "models/gemini-embedding-001",
+      "content": {"parts":[{"text": "Query 1"}]}
+    },
+    {
+      "model": "models/gemini-embedding-001",
+      "content": {"parts":[{"text": "Query 2"}]}
+    }
+  ]
+}</code></pre>
+
+<h2>Important Usage Notes</h2>
+<ul>
+  <li>Users must retain responsibility for uploaded content and confirm they possess necessary rights.</li>
+  <li>The service prohibits content violating intellectual property or privacy rights.</li>
+  <li>Subject to Google's Prohibited Use Policy and Terms of Service.</li>
+  <li><code>autoTruncate</code>: Enables auto-truncation for oversized content.</li>
+  <li><code>documentOcr</code>: Enables document OCR feature.</li>
+  <li><code>audioTrackExtraction</code>: Enables audio extraction feature.</li>
+</ul>
+</body>
+</html>

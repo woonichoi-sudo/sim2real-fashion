@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>MaskMode | Vertex AI Imagen | Google Cloud</title></head>
+<body>
+<!--
+  작성 일시: 2026-05-29 (재검증)
+  참고: MaskMode의 canonical REST 레퍼런스 페이지(Shared.Types/MaskMode)는 현재 존재하지 않음(HTTP 404, 재확인됨) — 원본 링크 제거함.
+  검증 소스:
+    - googleapis/python-aiplatform 공식 SDK 소스 (MaskImageConfig / MaskReferenceImage)
+      https://raw.githubusercontent.com/googleapis/python-aiplatform/main/vertexai/vision_models/_vision_models.py
+    - https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-insert-objects
+    - https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-outpainting
+
+  재검증 결과 (2026-05-29):
+    - MASK_MODE_DEFAULT 추가 (이전 파일에서 누락되어 있었음)
+    - MASK_MODE_PEOPLE 제거 (공식 enum에 존재하지 않음 — SDK enum map 및 문서에 없음)
+    - 공식 enum 값은 총 5개: DEFAULT, USER_PROVIDED, BACKGROUND, FOREGROUND, SEMANTIC
+-->
+
+<h1>MaskMode | Vertex AI Imagen | Google Cloud</h1>
+
+<p>
+  <code>MaskMode</code>는 Imagen 이미지 편집 API에서 마스크 레이어 생성 방식을 지정하는 열거형(enum)입니다.
+  <code>maskImageConfig.maskMode</code> 필드에 사용합니다.
+</p>
+
+<h2>열거형 값 (Enum Values)</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>값</th>
+      <th>설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>MASK_MODE_DEFAULT</code></td>
+      <td>
+        기본 마스크 모드 (Default mask mode).
+        명시적으로 마스크 모드를 지정하지 않을 때의 기본값입니다.
+      </td>
+    </tr>
+    <tr>
+      <td><code>MASK_MODE_USER_PROVIDED</code></td>
+      <td>
+        개발자가 직접 공급한 마스크 이미지를 사용합니다 (User provided mask).
+        <code>referenceImages</code> 배열 내 <code>REFERENCE_TYPE_MASK</code> 항목의
+        <code>referenceImage.bytesBase64Encoded</code> 필드에 마스크 이미지를 제공해야 합니다.
+        마스크는 편집 대상 영역을 표시하는 흑백(black and white) 이미지입니다.
+        <br>권장 dilation 값: 0.01 (삽입/제거 용도), 0.03 (아웃페인팅 용도), 0.00 (제품 배경 교체)
+      </td>
+    </tr>
+    <tr>
+      <td><code>MASK_MODE_BACKGROUND</code></td>
+      <td>
+        배경 세그멘테이션을 사용하여 자동으로 마스크를 생성합니다 (Background mask).
+        "Automatically generates a mask using background segmentation."
+        별도 마스크 이미지 제공 불필요. 배경 영역을 편집할 때 사용.
+      </td>
+    </tr>
+    <tr>
+      <td><code>MASK_MODE_FOREGROUND</code></td>
+      <td>
+        전경 세그멘테이션을 사용하여 자동으로 마스크를 생성합니다 (Foreground mask).
+        "Automatically generates a mask using foreground segmentation."
+        별도 마스크 이미지 제공 불필요. 주로 전경 객체 삽입(insertion) 및 제거(removal)에 사용.
+        <br>권장 dilation 값: 0.1
+      </td>
+    </tr>
+    <tr>
+      <td><code>MASK_MODE_SEMANTIC</code></td>
+      <td>
+        시맨틱 세그멘테이션(semantic segmentation)을 사용하여 자동으로 마스크를 생성합니다 (Semantic mask).
+        "Automatically generates a mask using semantic segmentation based on the segmentation classes
+        you specify in the <code>maskImageConfig.maskClasses</code> array."
+        <code>maskClasses</code> 배열에 세그멘테이션 클래스 ID를 지정해야 합니다.
+        예시: <code>[175, 176]</code> → 자전거(bicycle) 및 자동차(car) 클래스.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>maskImageConfig 객체 구조</h2>
+
+<pre><code>{
+  "maskMode": "MASK_MODE_DEFAULT" | "MASK_MODE_USER_PROVIDED" | "MASK_MODE_BACKGROUND" | "MASK_MODE_FOREGROUND" | "MASK_MODE_SEMANTIC",
+  "dilation": float,         // 0~1 사이 값, 마스크를 이미지 너비 비율만큼 팽창(확장)
+  "maskClasses": [integer]   // MASK_MODE_SEMANTIC 사용 시에만 필요한 클래스 ID 배열
+}</code></pre>
+
+<h3>필드 설명</h3>
+<ul>
+  <li><strong>maskMode</strong> (string, enum): 마스크 생성 방식 지정 (위 열거형 값 참조)</li>
+  <li><strong>dilation</strong> (float, 0~1): 마스크를 이미지 너비의 지정 비율만큼 팽창시킵니다. "The percentage of image width to dilate this mask by. A value of <code>0.01</code> is recommended to compensate for imperfect input masks." 삽입/제거: 0.01 권장, 아웃페인팅: 0.03 권장(0.0은 확장 지점에 뚜렷한 경계/흰색 테두리 발생 가능), 제품 이미지: 0.00 권장.</li>
+  <li><strong>maskClasses</strong> (integer[]): <code>MASK_MODE_SEMANTIC</code>에서만 사용. 세그멘테이션 클래스 ID 배열. 예: <code>[175, 176]</code> (자전거, 자동차).</li>
+</ul>
+
+<h2>referenceImages 내 마스크 참조 구조</h2>
+
+<pre><code>{
+  "referenceType": "REFERENCE_TYPE_MASK",
+  "referenceId": 2,
+  "referenceImage": {
+    "bytesBase64Encoded": "BASE64_ENCODED_MASK_IMAGE"
+    // MASK_MODE_USER_PROVIDED 사용 시에만 필요
+  },
+  "maskImageConfig": {
+    "maskMode": "MASK_MODE_USER_PROVIDED",
+    "dilation": 0.01
+  }
+}</code></pre>
+
+<h2>사용 예시</h2>
+
+<h3>사용자 제공 마스크 (MASK_MODE_USER_PROVIDED)</h3>
+<pre><code>{
+  "referenceType": "REFERENCE_TYPE_MASK",
+  "referenceId": 2,
+  "referenceImage": {
+    "bytesBase64Encoded": "B64_MASK_IMAGE"
+  },
+  "maskImageConfig": {
+    "maskMode": "MASK_MODE_USER_PROVIDED",
+    "dilation": 0.01
+  }
+}</code></pre>
+
+<h3>자동 전경 감지 (MASK_MODE_FOREGROUND)</h3>
+<pre><code>{
+  "referenceType": "REFERENCE_TYPE_MASK",
+  "referenceId": 2,
+  "maskImageConfig": {
+    "maskMode": "MASK_MODE_FOREGROUND",
+    "dilation": 0.1
+  }
+}</code></pre>
+
+<h3>시맨틱 세그멘테이션 (MASK_MODE_SEMANTIC)</h3>
+<pre><code>{
+  "referenceType": "REFERENCE_TYPE_MASK",
+  "referenceId": 2,
+  "maskImageConfig": {
+    "maskMode": "MASK_MODE_SEMANTIC",
+    "maskClasses": [175, 176],
+    "dilation": 0.01
+  }
+}</code></pre>
+
+<h2>사용 가능한 EditMode 조합</h2>
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>EditMode</th>
+      <th>사용 가능한 MaskMode</th>
+      <th>권장 dilation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>EDIT_MODE_INPAINT_INSERTION</code></td>
+      <td>USER_PROVIDED, FOREGROUND, BACKGROUND, SEMANTIC</td>
+      <td>0.01 (USER_PROVIDED), 0.1 (자동)</td>
+    </tr>
+    <tr>
+      <td><code>EDIT_MODE_INPAINT_REMOVAL</code></td>
+      <td>USER_PROVIDED, FOREGROUND, BACKGROUND, SEMANTIC</td>
+      <td>0.01 (USER_PROVIDED)</td>
+    </tr>
+    <tr>
+      <td><code>EDIT_MODE_OUTPAINT</code></td>
+      <td>USER_PROVIDED</td>
+      <td>0.03</td>
+    </tr>
+    <tr>
+      <td><code>EDIT_MODE_BGSWAP</code></td>
+      <td>USER_PROVIDED, BACKGROUND, FOREGROUND</td>
+      <td>0.00 (제품), 0.03 (일반)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>관련 페이지</h2>
+<ul>
+  <li><a href="EditMode.html">EditMode 열거형 참조</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-insert-objects">객체 삽입 (Insert Objects)</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-remove-objects">객체 제거 (Remove Objects)</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-outpainting">아웃페인팅 (Outpainting)</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/replace-image-background">배경 교체 (Background Replacement)</a></li>
+</ul>
+</body>
+</html>

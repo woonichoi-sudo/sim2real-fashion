@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Media Resolution</title></head>
+<body>
+<h1>Media Resolution for Gemini API</h1>
+<p>The <code>media_resolution</code> parameter controls how the Gemini API processes media inputs by determining the maximum tokens allocated for each item.</p>
+
+<h2>Section Headings</h2>
+<ol>
+  <li>Per-part media resolution (Gemini 3 only)</li>
+  <li>Global media resolution</li>
+  <li>Available resolution values</li>
+  <li>Token counts</li>
+  <li>Choosing the right resolution</li>
+  <li>Version compatibility summary</li>
+</ol>
+
+<h2>Per-Part Media Resolution (Gemini 3 Only)</h2>
+<p>"Gemini 3 allows you to set media resolution for individual media objects within your request, offering fine-grained optimisation of token usage."</p>
+<p>This feature enables mixing resolution levels in a single request and overrides global configuration for specific parts.</p>
+
+<h3>Python Example (Per-Part)</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client(
+  http_options={
+      'api_version': 'v1alpha',
+  }
+)
+
+with open('path/to/image1.jpg', 'rb') as f:
+    image_bytes_1 = f.read()
+
+image_part_high = types.Part.from_bytes(
+    data=image_bytes_1,
+    mime_type='image/jpeg',
+    media_resolution=types.MediaResolution.MEDIA_RESOLUTION_HIGH
+)
+
+model_name = 'gemini-3.1-pro-preview'
+
+response = client.models.generate_content(
+    model=model_name,
+    contents=["Describe these images:", image_part_high]
+)
+print(response.text)
+</code></pre>
+
+<h3>JavaScript Example (Per-Part)</h3>
+<pre><code>import { GoogleGenAI, MediaResolution, Part } from '@google/genai';
+import * as fs from 'fs';
+import { Buffer } from 'buffer';
+
+const ai = new GoogleGenAI({ httpOptions: { apiVersion: 'v1alpha' } });
+
+function fileToGenerativePart(path, mimeType, mediaResolution) {
+    return {
+        inlineData: { data: Buffer.from(fs.readFileSync(path)).toString('base64'), mimeType },
+        mediaResolution: { 'level': mediaResolution }
+    };
+}
+
+async function run() {
+    const imagePartHigh = fileToGenerativePart('img.png', 'image/png', Part.MediaResolutionLevel.MEDIA_RESOLUTION_HIGH);
+    const model_name = 'gemini-3.1-pro-preview';
+    const response = await ai.models.generateContent({
+        model: model_name,
+        contents: ['Describe these images:', imagePartHigh]
+    });
+    console.log(response.text);
+}
+run();
+</code></pre>
+
+<h3>REST Example (Per-Part)</h3>
+<pre><code>IMAGE_PATH="path/to/image.jpg"
+BASE64_IMAGE1=$(base64 -w 0 "$IMAGE_PATH")
+MODEL_ID="gemini-3.1-pro-preview"
+
+echo '{
+    "contents": [{
+      "parts": [
+        {"text": "Describe these images:"},
+        {
+          "inline_data": {
+            "mime_type": "image/jpeg",
+            "data": "'"$BASE64_IMAGE1"'",
+          },
+          "media_resolution": {"level": "MEDIA_RESOLUTION_HIGH"}
+        }
+      ]
+    }]
+  }' > request.json
+
+curl -s -X POST \
+  "https://generativelanguage.googleapis.com/v1alpha/models/${MODEL_ID}:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @request.json
+</code></pre>
+
+<h2>Global Media Resolution</h2>
+<p>This approach sets default resolution for all media parts using <code>GenerationConfig</code>, supported by all multimodal models.</p>
+
+<h3>Python Example (Global)</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+with open('image.jpg', 'rb') as f:
+    image_bytes = f.read()
+image_part = types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')
+
+config = types.GenerateContentConfig(
+    media_resolution=types.MediaResolution.MEDIA_RESOLUTION_HIGH
+)
+
+response = client.models.generate_content(
+    model='gemini-3.5-flash',
+    contents=["Describe this image:", image_part],
+    config=config
+)
+print(response.text)
+</code></pre>
+
+<h3>JavaScript Example (Global)</h3>
+<pre><code>import { GoogleGenAI, MediaResolution } from '@google/genai';
+import * as fs from 'fs';
+
+const ai = new GoogleGenAI({ });
+
+async function run() {
+   const response = await ai.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: ["Describe this image:", imagePart],
+      config: {
+         mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH
+      }
+   });
+   console.log(response.text);
+}
+run();
+</code></pre>
+
+<h3>REST Example (Global)</h3>
+<pre><code>curl -s -X POST \
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contents": [...],
+    "generation_config": {
+      "media_resolution": "MEDIA_RESOLUTION_HIGH"
+    }
+  }'
+</code></pre>
+
+<h2>Available Resolution Values</h2>
+<ul>
+  <li><code>MEDIA_RESOLUTION_UNSPECIFIED</code>: Default setting with varying token counts</li>
+  <li><code>MEDIA_RESOLUTION_LOW</code>: Lower tokens, faster processing, reduced cost, less detail</li>
+  <li><code>MEDIA_RESOLUTION_MEDIUM</code>: Balances detail, cost, and latency</li>
+  <li><code>MEDIA_RESOLUTION_HIGH</code>: Higher tokens, more detail, increased latency/cost</li>
+  <li><code>MEDIA_RESOLUTION_ULTRA_HIGH</code>: Highest tokens (per-part only), required for specialized uses like computer use</li>
+</ul>
+
+<h2>Token Count Tables</h2>
+
+<h3>Gemini 3 Models</h3>
+<table border="1">
+  <tr><th>Media Resolution</th><th>Image</th><th>Video</th><th>PDF</th></tr>
+  <tr><td>UNSPECIFIED (Default)</td><td>1120</td><td>70</td><td>560</td></tr>
+  <tr><td>LOW</td><td>280</td><td>70</td><td>280 + Native Text</td></tr>
+  <tr><td>MEDIUM</td><td>560</td><td>70</td><td>560 + Native Text</td></tr>
+  <tr><td>HIGH</td><td>1120</td><td>280</td><td>1120 + Native Text</td></tr>
+  <tr><td>ULTRA_HIGH</td><td>2240</td><td>N/A</td><td>N/A</td></tr>
+</table>
+
+<h3>Gemini 2.5 Models</h3>
+<table border="1">
+  <tr><th>Media Resolution</th><th>Image</th><th>Video</th><th>PDF (Scanned)</th><th>PDF (Native)</th></tr>
+  <tr><td>UNSPECIFIED (Default)</td><td>256 + Pan &amp; Scan (~2048)</td><td>256</td><td>256 + OCR</td><td>256 + Native Text</td></tr>
+  <tr><td>LOW</td><td>64</td><td>64</td><td>64 + OCR</td><td>64 + Native Text</td></tr>
+  <tr><td>MEDIUM</td><td>256</td><td>256</td><td>256 + OCR</td><td>256 + Native Text</td></tr>
+  <tr><td>HIGH</td><td>256 + Pan &amp; Scan</td><td>256</td><td>256 + OCR</td><td>256 + Native Text</td></tr>
+</table>
+
+<h2>Choosing the Right Resolution</h2>
+<ul>
+  <li><strong>Default</strong>: Balanced quality, latency, cost for typical use cases</li>
+  <li><strong>LOW</strong>: Cost and speed prioritized; fine detail unnecessary</li>
+  <li><strong>MEDIUM/HIGH</strong>: Intricate details required; complex visual analysis, charts, dense documents</li>
+  <li><strong>ULTRA_HIGH</strong>: Specific scenarios like computer use; per-part only</li>
+</ul>
+
+<h2>Recommended Settings by Media Type</h2>
+<table border="1">
+  <tr><th>Media Type</th><th>Recommended</th><th>Max Tokens</th><th>Guidance</th></tr>
+  <tr><td>Images</td><td>HIGH</td><td>1120</td><td>Ensures quality for analysis tasks</td></tr>
+  <tr><td>PDFs</td><td>MEDIUM</td><td>560</td><td>Optimal for documents; quality saturates at medium</td></tr>
+  <tr><td>Video (General)</td><td>LOW or MEDIUM</td><td>70 per frame</td><td>Sufficient for action recognition</td></tr>
+  <tr><td>Video (Text-heavy)</td><td>HIGH</td><td>280 per frame</td><td>Required for OCR and small details</td></tr>
+</table>
+
+<h2>Version Compatibility</h2>
+<ul>
+  <li>The <code>MediaResolution</code> enum is available for all models supporting media</li>
+  <li>Token counts differ between Gemini 3 and earlier versions</li>
+  <li>Per-part settings are exclusive to Gemini 3 models</li>
+</ul>
+
+<hr>
+<p>Source URL: https://ai.google.dev/gemini-api/docs/media-resolution</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Batch API Reference - Gemini API</title></head>
+<body>
+<h1>Google Gemini API - Batch API Reference</h1>
+
+<h2>Overview</h2>
+<p>Google's Batch API enables processing multiple requests in a single call through the Gemini API, supporting both content generation and embedding operations.</p>
+<p><strong>비용 및 처리 시간</strong>: Batch API는 요청을 비동기적으로 처리하며 동기(표준 interactive) API 대비 <strong>50% 비용 절감</strong>(표준 비용의 50% 가격)을 제공합니다. 목표 처리 시간은 <strong>24시간 이내</strong>이며, 대부분의 작업은 작업 규모와 시스템 부하에 따라 더 빠르게 완료됩니다.</p>
+
+<h2>Core Methods</h2>
+
+<h3>1. models.batchGenerateContent</h3>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/{batch.model=models/*}:batchGenerateContent</code></p>
+<p><strong>Purpose</strong>: Enqueues batches of <code>generateContent</code> requests for asynchronous processing.</p>
+<p><strong>Path Parameter</strong>: <code>batch.model</code> (string, required) - Format: <code>models/{model}</code></p>
+
+<h3>2. models.asyncBatchEmbedContent</h3>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/{batch.model=models/*}:asyncBatchEmbedContent</code></p>
+<p><strong>Purpose</strong>: Enqueues batches of <code>embedContent</code> requests for asynchronous processing. Distinguishes itself from the synchronous handler to avoid naming conflicts.</p>
+
+<h3>3. batches.get</h3>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/{name=batches/*}</code></p>
+<p><strong>Purpose</strong>: Retrieves the latest state of a long-running operation.</p>
+
+<h3>4. batches.list</h3>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/{name=batches}</code></p>
+<p><strong>Query Parameters</strong>: <code>filter</code>, <code>pageSize</code>, <code>pageToken</code>, <code>returnPartialSuccess</code></p>
+
+<h3>5. batches.cancel</h3>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/{name=batches/*}:cancel</code></p>
+<p><strong>Purpose</strong>: Initiates asynchronous cancellation of operations.</p>
+
+<h3>6. batches.delete</h3>
+<p><strong>Endpoint</strong>: <code>DELETE https://generativelanguage.googleapis.com/v1beta/{name=batches/*}</code></p>
+
+<h3>7. batches.updateGenerateContentBatch</h3>
+<p><strong>Endpoint</strong>: <code>PATCH https://generativelanguage.googleapis.com/v1beta/{generateContentBatch.name=batches/*}:updateGenerateContentBatch</code></p>
+<p><strong>Query Parameter</strong>: <code>updateMask</code> (FieldMask format)</p>
+
+<h3>8. batches.updateEmbedContentBatch</h3>
+<p><strong>Endpoint</strong>: <code>PATCH https://generativelanguage.googleapis.com/v1beta/{embedContentBatch.name=batches/*}:updateEmbedContentBatch</code></p>
+
+<h2>Key Data Structures</h2>
+
+<h3>GenerateContentBatch</h3>
+<p><strong>Fields</strong>:</p>
+<ul>
+  <li><code>model</code> (string, required) - Format: <code>models/{model}</code></li>
+  <li><code>name</code> (string, output-only) - Format: <code>batches/{batchId}</code></li>
+  <li><code>displayName</code> (string, required)</li>
+  <li><code>inputConfig</code> (InputConfig object, required)</li>
+  <li><code>output</code> (GenerateContentBatchOutput, output-only)</li>
+  <li><code>createTime</code>, <code>endTime</code>, <code>updateTime</code> (Timestamp)</li>
+  <li><code>batchStats</code> (BatchStats)</li>
+  <li><code>state</code> (BatchState enum)</li>
+  <li><code>priority</code> (int64, optional) - Higher values processed first; negative values permitted, defaulting to zero</li>
+</ul>
+
+<h3>InputConfig</h3>
+<p><strong>Union type with sources</strong>:</p>
+<ul>
+  <li><code>fileName</code> (string) - Reference to File containing requests</li>
+  <li><code>requests</code> (InlinedRequests) - Embedded request objects</li>
+</ul>
+
+<h3>GenerateContentRequest</h3>
+<p><strong>Key fields</strong>:</p>
+<ul>
+  <li><code>model</code> (string, required)</li>
+  <li><code>contents[]</code> (Content objects) - Conversation history/current query</li>
+  <li><code>tools[]</code> (Tool objects) - Function calling or code execution</li>
+  <li><code>toolConfig</code> (ToolConfig)</li>
+  <li><code>safetySettings[]</code> (SafetySetting objects)</li>
+  <li><code>systemInstruction</code> (Content, text-only)</li>
+  <li><code>generationConfig</code> (GenerationConfig)</li>
+  <li><code>cachedContent</code> (string) - Format: <code>cachedContents/{cachedContent}</code></li>
+  <li><code>serviceTier</code> (ServiceTier enum)</li>
+  <li><code>store</code> (boolean)</li>
+</ul>
+
+<h3>EmbedContentRequest</h3>
+<p><strong>Fields</strong>:</p>
+<ul>
+  <li><code>model</code> (string, required) - Format: <code>models/{model}</code></li>
+  <li><code>content</code> (Content, required) - Only <code>parts.text</code> counted</li>
+  <li><code>taskType</code> (TaskType enum, deprecated)</li>
+  <li><code>title</code> (string, deprecated)</li>
+  <li><code>outputDimensionality</code> (integer, deprecated)</li>
+  <li><code>embedContentConfig</code> (EmbedContentConfig)</li>
+</ul>
+
+<h3>BatchStats</h3>
+<ul>
+  <li><code>requestCount</code> (int64)</li>
+  <li><code>successfulRequestCount</code> (int64)</li>
+  <li><code>failedRequestCount</code> (int64)</li>
+  <li><code>pendingRequestCount</code> (int64)</li>
+</ul>
+
+<h3>Operation</h3>
+<ul>
+  <li><code>name</code> (string) - Unique identifier within service</li>
+  <li><code>metadata</code> (object) - Service-specific progress information</li>
+  <li><code>done</code> (boolean) - Completion status</li>
+  <li><code>error</code> (Status) - Error result</li>
+  <li><code>response</code> (object) - Success result</li>
+</ul>
+
+<h2>BatchState Enum</h2>
+<ul>
+  <li><code>BATCH_STATE_UNSPECIFIED</code></li>
+  <li><code>BATCH_STATE_PENDING</code></li>
+  <li><code>BATCH_STATE_RUNNING</code></li>
+  <li><code>BATCH_STATE_SUCCEEDED</code></li>
+  <li><code>BATCH_STATE_FAILED</code></li>
+  <li><code>BATCH_STATE_CANCELLED</code></li>
+  <li><code>BATCH_STATE_EXPIRED</code></li>
+</ul>
+
+<h2>ServiceTier Enum</h2>
+<ul>
+  <li><code>unspecified</code> (default/standard)</li>
+  <li><code>standard</code></li>
+  <li><code>flex</code></li>
+  <li><code>priority</code></li>
+</ul>
+
+<h2>Output Formats</h2>
+
+<h3>GenerateContentBatchOutput</h3>
+<p><strong>Union type</strong>:</p>
+<ul>
+  <li><code>responsesFile</code> (string) - JSONL file with GenerateContentResponse objects (one response per line)</li>
+  <li><code>inlinedResponses</code> (InlinedResponses) - Embedded response objects</li>
+</ul>
+
+<h3>InlinedResponse</h3>
+<ul>
+  <li><code>metadata</code> (Struct, output-only)</li>
+  <li><code>error</code> (Status) - Processing error</li>
+  <li><code>response</code> (GenerateContentResponse) - Actual response</li>
+</ul>
+
+<h2>Request/Response Flow</h2>
+<ol>
+  <li>Submit batch via <code>batchGenerateContent</code> or <code>asyncBatchEmbedContent</code></li>
+  <li>Returns <code>Operation</code> object with long-running operation ID</li>
+  <li>Poll using <code>batches.get</code> to monitor progress</li>
+  <li>Retrieve results from <code>output</code> field when <code>done=true</code></li>
+  <li>Optional: Cancel with <code>batches.cancel</code> or delete with <code>batches.delete</code></li>
+</ol>
+
+<h2>Key Features Summary</h2>
+<ul>
+  <li><strong>Priority System</strong>: "Batches with a higher priority value will be processed before batches with a lower priority value." Negative values are permitted, defaulting to zero.</li>
+  <li><strong>Flexible Input</strong>: Batches accept either inlined requests within the API call or references to uploaded files containing requests.</li>
+  <li><strong>Output Options</strong>: Results can be returned as inlined responses or stored in JSONL files with one response per line.</li>
+  <li><strong>Status Tracking</strong>: BatchStats provides counts for total, successful, failed, and pending requests.</li>
+  <li><strong>Batch States</strong>: Operations progress through PENDING → RUNNING → SUCCEEDED/FAILED/CANCELLED/EXPIRED states.</li>
+</ul>
+
+<h2>SDK Availability</h2>
+<ul>
+  <li>Python: <a href="https://googleapis.github.io/python-genai/">googleapis.github.io/python-genai/</a></li>
+  <li>Go: <a href="https://pkg.go.dev/google.golang.org/genai">pkg.go.dev/google.golang.org/genai</a></li>
+  <li>TypeScript: <a href="https://googleapis.github.io/js-genai/">googleapis.github.io/js-genai/</a></li>
+  <li>Java: <a href="https://googleapis.github.io/java-genai/javadoc/">googleapis.github.io/java-genai/javadoc/</a></li>
+  <li>C#: <a href="https://googleapis.github.io/dotnet-genai/">googleapis.github.io/dotnet-genai/</a></li>
+</ul>
+</body>
+</html>

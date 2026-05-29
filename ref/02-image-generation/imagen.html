@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Imagen</title></head>
+<body>
+<h1>Generate Images Using Imagen</h1>
+
+<p>Google's Imagen is described as a "high-fidelity image generation model, capable of generating realistic and high quality images from text prompts." The service generates 1–4 images per request with automatic SynthID watermarking.</p>
+
+<h2>Current Models (Imagen 4)</h2>
+<table border="1">
+  <tr><th>Model Code</th><th>Variant</th><th>Description</th></tr>
+  <tr><td><code>imagen-4.0-generate-001</code></td><td>Standard</td><td>Balanced quality and speed</td></tr>
+  <tr><td><code>imagen-4.0-ultra-generate-001</code></td><td>Ultra</td><td>Highest quality output</td></tr>
+  <tr><td><code>imagen-4.0-fast-generate-001</code></td><td>Fast</td><td>Optimized for speed</td></tr>
+</table>
+
+<h2>Generate Images Using the Imagen Models</h2>
+
+<h3>Python Example</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_images(
+    model='imagen-4.0-generate-001',
+    prompt='Robot holding a red skateboard',
+    config=types.GenerateImagesConfig(
+        number_of_images=4,
+    )
+)
+
+for generated_image in response.generated_images:
+    image = generated_image.image
+    image.show()
+</code></pre>
+
+<h3>JavaScript Example</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const response = await ai.models.generateImages({
+  model: "imagen-4.0-generate-001",
+  prompt: "Robot holding a red skateboard",
+  config: { numberOfImages: 4 },
+});
+
+for (const image of response.generatedImages) {
+  console.log(image.image.imageBytes);
+}
+</code></pre>
+
+<h3>Go Example</h3>
+<pre><code>client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey: os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGoogleAI,
+})
+
+result, _ := client.Models.GenerateImages(
+    ctx,
+    "imagen-4.0-generate-001",
+    "Robot holding a red skateboard",
+    &genai.GenerateImagesConfig{NumberOfImages: 4},
+)
+</code></pre>
+
+<h3>REST Example</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=$GEMINI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "instances": [{"prompt": "Robot holding a red skateboard"}],
+    "parameters": {"sampleCount": 4}
+  }'
+</code></pre>
+
+<h2>Imagen Configuration Parameters</h2>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  <tr><td><code>numberOfImages</code></td><td>integer</td><td>4</td><td>Number of images to generate (1–4)</td></tr>
+  <tr><td><code>imageSize</code></td><td>string</td><td>"1K"</td><td>Image size: "1K" or "2K" (Standard/Ultra only)</td></tr>
+  <tr><td><code>aspectRatio</code></td><td>string</td><td>"1:1"</td><td>Aspect ratio: "1:1", "3:4", "4:3", "9:16", "16:9"</td></tr>
+  <tr><td><code>personGeneration</code></td><td>string</td><td>"allow_adult"</td><td>Person generation policy: "dont_allow", "allow_adult", "allow_all"</td></tr>
+</table>
+
+<p><strong>Note:</strong> <code>"allow_all"</code> is not permitted in EU, UK, CH, and MENA regions.</p>
+
+<h2>Imagen Prompt Guide</h2>
+
+<h3>Prompt Writing Basics</h3>
+<p>Effective prompts combine three elements:</p>
+<ol>
+  <li><strong>Subject</strong> — the main focus of the image</li>
+  <li><strong>Context/Background</strong> — environment and setting</li>
+  <li><strong>Style</strong> — artistic style, medium, or aesthetic</li>
+</ol>
+
+<p><strong>Maximum prompt length:</strong> 480 tokens</p>
+
+<h3>Photography Prompts</h3>
+<table border="1">
+  <tr><th>Subject Type</th><th>Recommended Lens</th></tr>
+  <tr><td>Portraits (people)</td><td>24–35mm</td></tr>
+  <tr><td>Food / objects</td><td>60–105mm macro</td></tr>
+  <tr><td>Sports / animals</td><td>100–400mm telephoto</td></tr>
+  <tr><td>Astronomy / landscapes</td><td>10–24mm wide-angle</td></tr>
+</table>
+
+<h3>Style Categories</h3>
+<ul>
+  <li>Photography (photorealistic images, portraits, objects, motion, wide-angle)</li>
+  <li>Illustration and art</li>
+  <li>Shapes and materials</li>
+  <li>Historical art references</li>
+  <li>Image quality modifiers</li>
+</ul>
+
+<h3>Generate Text in Images</h3>
+<p>Imagen can generate text within images. Best results with:</p>
+<ul>
+  <li>Maximum 25 characters of text per prompt</li>
+  <li>Clear, short phrases for menus, infographics, diagrams</li>
+</ul>
+
+<h3>Prompt Parameterization</h3>
+<p>Use variables in prompts to create systematic variations. For example, vary subject, style, or setting programmatically.</p>
+
+<h3>Advanced Prompt Writing Techniques</h3>
+<ul>
+  <li>Iterate and refine prompts based on results</li>
+  <li>Specify lighting conditions (e.g., "golden hour lighting", "studio lighting")</li>
+  <li>Specify camera angles (e.g., "bird's eye view", "close-up")</li>
+  <li>Use artistic style references (e.g., "oil painting", "watercolor", "digital art")</li>
+</ul>
+
+<h2>Supported Languages</h2>
+<p>"Imagen supports English only prompts at this time."</p>
+
+<h2>Important Notes</h2>
+<ul>
+  <li>All generated images include a SynthID watermark.</li>
+  <li>Maximum prompt length is 480 tokens.</li>
+  <li><code>"allow_all"</code> for personGeneration is not available in EU, UK, CH, and MENA regions.</li>
+  <li>Text generation in images: limit to 25 characters for best results.</li>
+  <li>imageSize parameter ("1K" or "2K") is only available for Standard and Ultra variants.</li>
+</ul>
+
+<hr>
+<p><em>Source: https://ai.google.dev/gemini-api/docs/imagen — Fetched 2026-05-29</em></p>
+</body>
+</html>

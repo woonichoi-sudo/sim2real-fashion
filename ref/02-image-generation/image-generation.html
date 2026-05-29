@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Image Generation</title></head>
+<body>
+<h1>Gemini Image Generation</h1>
+
+<p>Google's Gemini API supports native image generation through three models (collectively called "Nano Banana" in internal branding). All generated images include a SynthID watermark for responsible AI identification.</p>
+
+<h2>Supported Models</h2>
+<table border="1">
+  <tr><th>Model Name</th><th>Model Code</th><th>Description</th></tr>
+  <tr><td>Nano Banana 2 (Gemini 3.1 Flash Image)</td><td><code>gemini-3.1-flash-image</code></td><td>Speed and high-volume developer use cases (GA)</td></tr>
+  <tr><td>Nano Banana Pro (Gemini 3 Pro Image)</td><td><code>gemini-3-pro-image</code></td><td>Professional asset production, advanced reasoning (GA)</td></tr>
+  <tr><td>Nano Banana (Gemini 2.5 Flash Image)</td><td><code>gemini-2.5-flash-image</code></td><td>Speed and efficiency (GA)</td></tr>
+</table>
+
+<h2>Core Capabilities</h2>
+
+<h3>1. Image Generation (Text-to-Image)</h3>
+<p>Create images from text prompts alone. Supports generating complete UI apps from prompts.</p>
+
+<h4>Python Example</h4>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model="gemini-3.1-flash-image",
+    contents="Generate an image of a cat sitting on a beach at sunset.",
+    config=types.GenerateContentConfig(
+        response_modalities=["TEXT", "IMAGE"]
+    )
+)
+
+for part in response.candidates[0].content.parts:
+    if part.inline_data:
+        # Save or display the image
+        image_data = part.inline_data.data
+</code></pre>
+
+<h3>2. Image Editing (Text-and-Image-to-Image)</h3>
+<p>"Add, remove, or modify elements, change the style, or adjust the color grading" using text and existing images.</p>
+
+<h4>Python Example</h4>
+<pre><code>import PIL.Image
+
+image = PIL.Image.open("input.jpg")
+response = client.models.generate_content(
+    model="gemini-3.1-flash-image",
+    contents=["Add a rainbow to this image", image],
+    config=types.GenerateContentConfig(
+        response_modalities=["TEXT", "IMAGE"]
+    )
+)</code></pre>
+
+<h3>3. Multi-turn Image Editing</h3>
+<p>Iterative image refinement through multi-turn chat conversations.</p>
+
+<h3>4. Reference Images (Up to 14)</h3>
+<p>Use up to 14 reference images for composition control.</p>
+<table border="1">
+  <tr><th>Model</th><th>Max Objects</th><th>Max Characters</th></tr>
+  <tr><td>Gemini 3.1 Flash</td><td>10</td><td>4</td></tr>
+  <tr><td>Gemini 3.1 Pro</td><td>6</td><td>5</td></tr>
+</table>
+
+<h3>5. High Resolution Output</h3>
+<p>Generation at 512 (0.5K), 1K, 2K, and 4K resolutions.</p>
+<p><strong>Note:</strong> Use uppercase "K" — <code>4K</code> not <code>4k</code>.</p>
+
+<h3>6. Grounding with Google Search</h3>
+<p>Real-time data integration for weather, events, and current information.</p>
+
+<h3>7. Grounding with Google Search for Images (Gemini 3.1 Flash only)</h3>
+<p>Visual context from web images. Requires source attribution and webpage links.</p>
+
+<h3>8. Video-to-Image Generation (Gemini 3.1 Flash only)</h3>
+<p>"Generate new images using a video's context as a multimodal reference." Pass a video file (via direct upload or public YouTube URL) alongside a text prompt to generate thumbnails, movie posters, etc.</p>
+
+<h2>Generation Parameters</h2>
+<table border="1">
+  <tr><th>Parameter</th><th>Values</th><th>Description</th></tr>
+  <tr><td><code>response_modalities</code></td><td>["TEXT", "IMAGE"]</td><td>Specify output modalities</td></tr>
+  <tr><td><code>aspect_ratio</code></td><td>"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9"</td><td>Output image aspect ratio</td></tr>
+  <tr><td><code>image_size</code></td><td>"512", "1K", "2K", "4K"</td><td>Output image resolution</td></tr>
+  <tr><td><code>thinking_level</code></td><td>"minimal", "High"</td><td>Thinking process level for complex prompts</td></tr>
+  <tr><td><code>include_thoughts</code></td><td>boolean</td><td>Return the model's thinking process</td></tr>
+  <tr><td><code>tools</code></td><td>Google Search, Image Search, etc.</td><td>Grounding tools</td></tr>
+</table>
+
+<h2>모델별 지원 사양 (Per-Model Capabilities)</h2>
+<p>The above parameter table is generic. Actual supported values differ per model. The table below lists confirmed per-model constraints. Values marked <strong>(미확인)</strong> could not be confirmed from the live official pages.</p>
+<table border="1">
+  <tr>
+    <th>Capability</th>
+    <th><code>gemini-2.5-flash-image</code></th>
+    <th><code>gemini-3.1-flash-image</code></th>
+    <th><code>gemini-3-pro-image</code></th>
+  </tr>
+  <tr>
+    <td><code>image_size</code> (resolution)</td>
+    <td>Fixed at 1024 (not configurable) <strong>(미확인)</strong></td>
+    <td>512 (0.5K) / 1K / 2K / 4K (default 1K)</td>
+    <td>1K / 2K / 4K (no 512)</td>
+  </tr>
+  <tr>
+    <td><code>aspect_ratio</code></td>
+    <td>1:1 ~ 21:9 (standard set)</td>
+    <td>1:1 ~ 21:9 <strong>+ extreme ratios 1:4 / 4:1 / 1:8 / 8:1</strong> (extreme ratios exclusive to 3.1 Flash)</td>
+    <td>1:1 ~ 21:9 (standard set)</td>
+  </tr>
+  <tr>
+    <td>Thinking (<code>thinking_level</code>)</td>
+    <td>✗ Not Supported</td>
+    <td>✓ Supported (minimal / High)</td>
+    <td>✓ Supported</td>
+  </tr>
+  <tr>
+    <td>Google Search grounding</td>
+    <td>✗ Not Supported</td>
+    <td>✓ Supported (incl. Image Search)</td>
+    <td>✓ Supported</td>
+  </tr>
+</table>
+<p><em>Note: The extreme aspect ratios 1:4, 4:1, 1:8, and 8:1 were added by Gemini 3.1 Flash Image and are exclusive to it ("Gemini 3.1 Flash Image adds 1:4, 4:1, 1:8, and 8:1 aspect ratios"). Whether <code>gemini-2.5-flash-image</code> resolution is strictly fixed at 1024 (vs. configurable) is not stated on the live model card or guide and is marked 미확인.</em></p>
+
+<h2>Thinking Mode</h2>
+<p>Models use reasoning processes for complex prompts with adjustable thinking levels. Thinking tokens are billed regardless of whether <code>include_thoughts</code> is set.</p>
+
+<h3>Controlling Thinking Levels</h3>
+<pre><code>config=types.GenerateContentConfig(
+    thinking_config=types.ThinkingConfig(
+        thinking_level="High"  # or "minimal"
+    ),
+    response_modalities=["TEXT", "IMAGE"]
+)</code></pre>
+
+<h3>Thought Signatures</h3>
+<p>Official SDKs automatically handle Thought Signatures for maintaining context across multi-turn thinking conversations.</p>
+
+<h2>Text Rendering</h2>
+<p>"Capable of generating legible, stylized text for infographics, menus, diagrams." Best results with concise text.</p>
+
+<h2>Code Examples by Language</h2>
+<p>Full code examples are available in: Python, JavaScript, Go, Java, C#, and REST (curl)</p>
+
+<h3>REST (curl) Example</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=$GEMINI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "contents": [{
+      "parts": [{"text": "Generate an image of a cat sitting on a beach"}]
+    }],
+    "generationConfig": {
+      "responseModalities": ["TEXT", "IMAGE"]
+    }
+  }'</code></pre>
+
+<h2>Important Notes</h2>
+<ul>
+  <li>All generated images include a SynthID watermark.</li>
+  <li>Ensure you have necessary rights for any uploaded images.</li>
+  <li>Use uppercase "K" for resolution sizes (e.g., <code>4K</code> not <code>4k</code>).</li>
+  <li>Thinking tokens are billed regardless of <code>include_thoughts</code> setting.</li>
+  <li>When using Image Search grounding, source attribution and webpage links are required.</li>
+  <li>Video-to-image is available only on Gemini 3.1 Flash (<code>gemini-3.1-flash-image</code>).</li>
+</ul>
+
+<hr>
+<p><em>Source: https://ai.google.dev/gemini-api/docs/image-generation — Fetched 2026-05-29</em></p>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Safety Guidance</title></head>
+<body>
+<h1>Safety and Factuality Guidance for Gemini API</h1>
+<p>"Generative artificial intelligence models are powerful tools, but they are not without their limitations. Their versatility and applicability can sometimes lead to unexpected outputs, such as outputs that are inaccurate, biased, or offensive."</p>
+<p>Key requirement: "Post-processing, and rigorous manual evaluation are essential to limit the risk of harm from such outputs."</p>
+
+<h2>Applicable Policies</h2>
+<ul>
+  <li>Use governed by Generative AI Prohibited Use Policy and Gemini API terms of service</li>
+  <li>Built-in content filtering with adjustable safety settings across 4 dimensions</li>
+  <li>Optional grounding with Google Search for improved factuality</li>
+</ul>
+
+<h2>Section 1: Understanding Safety Risks</h2>
+<p><strong>Definition:</strong> "Safety is being defined as the ability of an LLM to avoid causing harm to its users, for example, by generating toxic language or content that promotes stereotypes."</p>
+<p><strong>Key Responsibility:</strong> "As the application owner, you are responsible for knowing your users and the potential harms your application may cause, and ensuring that your application uses LLMs safely and responsibly."</p>
+
+<h3>Risk Assessment Process</h3>
+<ul>
+  <li>Evaluate likelihood of harm occurrence</li>
+  <li>Determine seriousness level</li>
+  <li>Identify mitigation steps</li>
+  <li>Example contrast: Factual essay generation requires more misinformation vigilance than fictional entertainment apps</li>
+</ul>
+
+<h3>Advanced Tips - User Research</h3>
+<ul>
+  <li>Consult diverse prospective user groups about application purpose</li>
+  <li>Research state-of-the-art studies in application domain</li>
+  <li>Observe similar app usage patterns</li>
+  <li>Conduct user studies, surveys, or informal interviews</li>
+</ul>
+
+<h3>Resource References</h3>
+<ul>
+  <li>AI Risk Management Framework (NIST)</li>
+  <li>DeepMind publication on "ethical and social risks of harm from language models"</li>
+</ul>
+
+<h2>Section 2: Mitigation Strategies</h2>
+
+<h3>Approach 1: Tuning Model Output</h3>
+<ul>
+  <li>Make outputs more predictable and consistent</li>
+  <li>Better reflect acceptable context-specific results</li>
+</ul>
+
+<h3>Approach 2: Facilitate Safer Inputs</h3>
+<ul>
+  <li>Experiment with input prompts for safety optimization</li>
+  <li>Restrict users to drop-down prompt selections</li>
+  <li>Offer pop-up suggestions with tested descriptive phrases</li>
+</ul>
+
+<h3>Approach 3: Input/Output Filtering</h3>
+<ul>
+  <li>Block unsafe inputs and filter outputs before user display</li>
+  <li>Simple blocklists for unsafe words/phrases</li>
+  <li>Manual human reviewer alterations/blocks</li>
+</ul>
+<p><strong>Warning:</strong> "Automatically blocking based on a static list can have unintended results such as targeting a particular group that commonly uses vocabulary in the blocklist."</p>
+
+<h3>Approach 4: Trained Classifiers</h3>
+<ul>
+  <li>Label prompts with potential harms or adversarial signals</li>
+  <li>Deploy strategies based on detected harm type</li>
+  <li>Block overtly adversarial/abusive input with pre-scripted responses</li>
+</ul>
+<p><strong>Advanced Options for Harmful Outputs:</strong></p>
+<ul>
+  <li>Provide error message or pre-scripted output</li>
+  <li>Retry prompt (same prompt may generate different safe outputs)</li>
+</ul>
+
+<h3>Approach 5: Deliberate Misuse Safeguards</h3>
+<ul>
+  <li>Assign unique user IDs</li>
+  <li>Impose query volume limits per time period</li>
+  <li>Protect against prompt injection attacks</li>
+</ul>
+<p><strong>Definition:</strong> "Prompt injection, much like SQL injection, is a way for malicious users to design an input prompt that manipulates the output of the model."</p>
+
+<h3>Approach 6: Lower-Risk Functionality</h3>
+<ul>
+  <li>Narrow scope tasks (keyword extraction)</li>
+  <li>Increase human oversight (reviewed short-form content)</li>
+  <li>Examples: Instead of full email generation, offer outline expansion or alternative phrasings</li>
+</ul>
+
+<h3>Approach 7: Adjustable Safety Settings</h3>
+<ul>
+  <li>Modify safety configuration during prototyping</li>
+  <li>Adjust across filter categories to restrict/allow content types</li>
+  <li>Reference: Safety settings guide</li>
+</ul>
+
+<h3>Approach 8: Enable Grounding</h3>
+<ul>
+  <li>Use Grounding with Google Search to reduce hallucinations</li>
+  <li>"The Grounding with Google Search feature connects the Gemini model to real-time web content and works with all available languages. This allows Gemini to provide more accurate answers and cite verifiable sources beyond the models knowledge cutoff."</li>
+</ul>
+
+<h2>Section 3: Safety Testing</h2>
+<p><strong>Context Matters:</strong> Risk severity varies by application and implementation. A haiku generator poses different risks than legal document summarization tools. Human expert review prior to action reduces harmful output likelihood.</p>
+
+<h3>Test Type 1: Safety Benchmarking</h3>
+<ul>
+  <li>Design safety metrics reflecting potential application harms</li>
+  <li>Test performance using evaluation datasets</li>
+  <li>Establish minimum acceptable safety metric levels before testing</li>
+  <li>Gather evaluation datasets based on priority metrics</li>
+</ul>
+<p><strong>Advanced Tips:</strong></p>
+<ul>
+  <li>Don't rely solely on "off-the-shelf" approaches</li>
+  <li>Build custom testing datasets using human raters for context fit</li>
+  <li>Address metric trade-offs when improvements in one area hurt another</li>
+  <li>Consider worst-case performance over average performance</li>
+</ul>
+
+<h3>Test Type 2: Adversarial Testing</h3>
+<ul>
+  <li>Proactively attempt to break the application</li>
+  <li>Identify weakness points for remediation</li>
+  <li>Requires evaluators with application domain expertise</li>
+</ul>
+<p><strong>Malicious Input Definition:</strong> "An input may be malicious when the input is clearly designed to produce an unsafe or harmful output-- for example, asking a text generation model to generate a hateful rant about a particular religion."</p>
+<p><strong>Inadvertently Harmful Input Definition:</strong> "An input is inadvertently harmful when the input itself may be innocuous, but produces harmful output -- for example, asking a text generation model to describe a person of a particular ethnicity and receiving a racist output."</p>
+
+<h3>Test Data Selection Strategy</h3>
+<ul>
+  <li>Select data most likely to elicit problematic output</li>
+  <li>Probe all possible harm types</li>
+  <li>Include rare/unusual examples and relevant edge-cases</li>
+  <li>Incorporate diversity across sentence dimensions (structure, meaning, length)</li>
+  <li>Reference: Google's Responsible AI practices in fairness</li>
+</ul>
+<p><strong>Advanced Tip:</strong> "Use automated testing instead of the traditional method of enlisting people in 'red teams' to try and break your application. In automated testing, the 'red team' is another language model that finds input text that elicit harmful outputs from the model being tested."</p>
+<p><strong>Note:</strong> "LLMs are known to sometimes produce different outputs for the same input prompt. Multiple rounds of testing may be needed to catch more of the problematic outputs."</p>
+
+<h2>Section 4: Ongoing Monitoring</h2>
+<p><strong>Planning Principle:</strong> "No matter how much you test and mitigate, you can never guarantee perfection, so plan upfront how you'll spot and deal with problems that arise."</p>
+
+<h3>Monitoring Approaches</h3>
+<ul>
+  <li>Establish monitored channels for user feedback (thumbs up/down ratings)</li>
+  <li>Run user studies with diverse participant mix</li>
+  <li>Proactively solicit feedback from users with different usage patterns</li>
+</ul>
+<p><strong>Advanced Tip:</strong> "When users give feedback to AI products, it can greatly improve the AI performance and the user experience over time by, for example, helping you choose better examples for prompt tuning."</p>
+<p>Resource: Google's People and AI guidebook - "Feedback and Control" chapter</p>
+
+<h2>Recommended Implementation Cycle</h2>
+<p>The iterative model implementation cycle with phases:</p>
+<ol>
+  <li>Understanding safety risks</li>
+  <li>Considering adjustments</li>
+  <li>Performing safety testing</li>
+  <li>Soliciting user feedback and monitoring</li>
+</ol>
+<p>"The adjustment and testing phases should be iterative until you reach performance appropriate for your application."</p>
+
+<h2>Closing Recommendations</h2>
+<p><strong>Next Steps:</strong></p>
+<ul>
+  <li>Reference safety settings guide for adjustable configurations</li>
+  <li>Review prompting introduction for first prompt development</li>
+</ul>
+
+<hr>
+<p>Source URL: https://ai.google.dev/gemini-api/docs/safety-guidance</p>
+<p>Last updated: 2026-04-28 UTC</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

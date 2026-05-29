@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - API Versions</title></head>
+<body>
+<h1>Gemini API Versions Explained</h1>
+
+<p>Last updated: May 28, 2026</p>
+
+<h2>Available Versions</h2>
+
+<h3>v1 (Stable)</h3>
+<p>"Stable version of the API. Features in the stable version are fully-supported over the lifetime of the major version."</p>
+<p>Non-breaking changes may be introduced without changing the major version. Breaking changes would only occur in a new major version with a deprecation period. Recommended for production environments.</p>
+
+<h3>v1beta (Preview / Beta)</h3>
+<p>"This version includes early features that may be under development and are subject to breaking changes."</p>
+<p><strong>Warning:</strong> "If you require stability in your production environment and cannot risk breaking changes, you should not use this version in production."</p>
+<p>SDK default: v1beta. Includes newer and experimental features not yet in v1.</p>
+
+<h2>Feature Support by Version</h2>
+
+<table border="1">
+  <tr><th>Feature</th><th>v1</th><th>v1beta</th></tr>
+  <tr><td>Generate Content - Text-only input</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Content - Text-and-image input</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Content - Text output</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Content - Multi-turn conversations</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Content - Function calls</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Content - Streaming</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Embed Content - Text-only input</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Generate Answer</td><td>-</td><td>&#10003;</td></tr>
+  <tr><td>Semantic retriever</td><td>-</td><td>&#10003;</td></tr>
+  <tr><td>Interactions API</td><td>-</td><td>&#10003;</td></tr>
+</table>
+
+<h2>Configure API Version in an SDK</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+
+client = genai.Client(
+    api_key="YOUR_API_KEY",
+    http_options={"api_version": "v1"}  # Use stable v1
+)
+</code></pre>
+
+<h3>JavaScript</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({
+  apiKey: "YOUR_API_KEY",
+  httpOptions: { apiVersion: "v1" }  // Use stable v1
+});
+</code></pre>
+
+<h3>REST</h3>
+<pre><code># v1 (stable)
+curl "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"contents": [{"parts": [{"text": "Hello"}]}]}'
+
+# v1beta (includes experimental features)
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"contents": [{"parts": [{"text": "Hello"}]}]}'
+</code></pre>
+
+<h2>SDK Links</h2>
+<ul>
+  <li>Python SDK</li>
+  <li>Go SDK</li>
+  <li>TypeScript/JavaScript SDK</li>
+  <li>Java SDK</li>
+  <li>C# (.NET) SDK</li>
+</ul>
+
+<hr>
+<p><em>Source: https://ai.google.dev/gemini-api/docs/api-versions — Fetched 2026-05-29</em></p>
+</body>
+</html>

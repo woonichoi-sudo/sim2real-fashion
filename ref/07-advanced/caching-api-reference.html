@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Caching API Reference - Gemini API</title></head>
+<body>
+<h1>Google Gemini API - Caching API Reference</h1>
+
+<h2>Overview</h2>
+<p>The Gemini API's caching feature allows developers to save and reuse preprocessed input tokens for repeated queries, enabling cost and speed savings when asking multiple questions about the same content.</p>
+
+<h2>API Methods</h2>
+
+<h3>1. cachedContents.create</h3>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/cachedContents</code></p>
+<p><strong>Purpose</strong>: Creates a CachedContent resource by preprocessing content (files, text, tools) for reuse across requests.</p>
+<p><strong>Key Request Fields</strong>:</p>
+<ul>
+  <li><code>contents[]</code> (Content objects) - immutable content to cache</li>
+  <li><code>tools[]</code> (Tool objects) - optional tools the model may use</li>
+  <li><code>model</code> (string, required) - format: <code>models/{model}</code></li>
+  <li><code>systemInstruction</code> (Content) - developer system instructions</li>
+  <li><code>displayName</code> (string) - max 128 Unicode characters</li>
+  <li><code>expiration</code> (union type):
+    <ul>
+      <li><code>expireTime</code> (RFC 3339 timestamp)</li>
+      <li><code>ttl</code> (duration format, e.g., "300s")</li>
+    </ul>
+  </li>
+  <li><code>toolConfig</code> (ToolConfig) - shared tool configuration</li>
+</ul>
+
+<h3>2. cachedContents.list</h3>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/cachedContents</code></p>
+<p><strong>Purpose</strong>: Retrieves paginated list of cached content entries with optional filtering parameters.</p>
+<p><strong>Query Parameters</strong>:</p>
+<ul>
+  <li><code>pageSize</code> (integer) - max 1000 items</li>
+  <li><code>pageToken</code> (string) - pagination token</li>
+</ul>
+<p><strong>Response</strong>: List of CachedContent objects with <code>nextPageToken</code></p>
+
+<h3>3. cachedContents.get</h3>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/{name=cachedContents/*}</code></p>
+<p><strong>Purpose</strong>: Fetches a specific cached content resource by its identifier.</p>
+<p><strong>Path Parameter</strong>: <code>name</code> (string) - format: <code>cachedContents/{id}</code></p>
+<p><strong>Returns</strong>: Single CachedContent instance</p>
+
+<h3>4. cachedContents.patch</h3>
+<p><strong>Endpoint</strong>: <code>PATCH https://generativelanguage.googleapis.com/v1beta/{cachedContent.name=cachedContents/*}</code></p>
+<p><strong>Purpose</strong>: Updates only the expiration settings (TTL or expireTime) of existing cached content.</p>
+<p><strong>Query Parameter</strong>: <code>updateMask</code> (FieldMask) - fields to update (comma-separated)</p>
+<p><strong>Updatable Fields</strong>: Only expiration (<code>expireTime</code> or <code>ttl</code>)</p>
+<p><strong>Note</strong>: "only expiration is updatable"</p>
+
+<h3>5. cachedContents.delete</h3>
+<p><strong>Endpoint</strong>: <code>DELETE https://generativelanguage.googleapis.com/v1beta/{name=cachedContents/*}</code></p>
+<p><strong>Purpose</strong>: Removes a cached content resource entirely.</p>
+<p><strong>Returns</strong>: Empty JSON object <code>{}</code> on success</p>
+
+<h2>Code Examples by SDK</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+document = client.files.upload(file=media / "a11.txt")
+model_name = "gemini-3.5-flash"
+
+cache = client.caches.create(
+    model=model_name,
+    config=types.CreateCachedContentConfig(
+        contents=[document],
+        system_instruction="You are an expert analyzing transcripts.",
+    ),
+)
+
+response = client.models.generate_content(
+    model=model_name,
+    contents="Please summarize this transcript",
+    config=types.GenerateContentConfig(cached_content=cache.name),
+)</code></pre>
+
+<p><strong>Update TTL</strong>:</p>
+<pre><code>import datetime
+ttl = f"{int(datetime.timedelta(hours=2).total_seconds())}s"
+client.caches.update(
+    name=cache.name, config=types.UpdateCachedContentConfig(ttl=ttl)
+)</code></pre>
+
+<p><strong>Get Cache</strong>:</p>
+<pre><code>cache = client.caches.get(name=cache_name)</code></pre>
+
+<p><strong>Delete Cache</strong>:</p>
+<pre><code>client.caches.delete(name=cache.name)</code></pre>
+
+<h3>Node.js</h3>
+<pre><code>const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const document = await ai.files.upload({
+  file: filePath,
+  config: { mimeType: "text/plain" },
+});
+
+const cache = await ai.caches.create({
+  model: modelName,
+  config: {
+    contents: contents,
+    systemInstruction: "You are an expert analyzing transcripts.",
+  },
+});
+
+const response = await ai.models.generateContent({
+  model: modelName,
+  contents: "Please summarize this transcript",
+  config: { cachedContent: cache.name },
+});</code></pre>
+
+<p><strong>Update TTL</strong>:</p>
+<pre><code>const ttl = `${2 * 3600}s`;
+cache = await ai.caches.update({
+  name: cache.name,
+  config: { ttl },
+});</code></pre>
+
+<h3>Go</h3>
+<pre><code>ctx := context.Background()
+client, err := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey:  os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGeminiAPI,
+})
+
+cache, err := client.Caches.Create(ctx, modelName, &genai.CreateCachedContentConfig{
+    Contents: contents,
+    SystemInstruction: genai.NewContentFromText(
+        "You are an expert analyzing transcripts.", genai.RoleUser,
+    ),
+})
+
+response, err := client.Models.GenerateContent(
+    ctx,
+    modelName,
+    genai.Text("Please summarize this transcript"),
+    &genai.GenerateContentConfig{
+        CachedContent: cache.Name,
+    },
+)</code></pre>
+
+<h3>Shell/cURL</h3>
+<pre><code>curl -X POST "https://generativelanguage.googleapis.com/v1beta/cachedContents?key=$GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -d @request.json
+
+curl "https://generativelanguage.googleapis.com/v1beta/$CACHE_NAME?key=$GEMINI_API_KEY"
+
+curl -X PATCH "https://generativelanguage.googleapis.com/v1beta/$CACHE_NAME?key=$GEMINI_API_KEY" \
+ -H 'Content-Type: application/json' \
+ -d '{"ttl": "600s"}'
+
+curl -X DELETE "https://generativelanguage.googleapis.com/v1beta/$CACHE_NAME?key=$GEMINI_API_KEY"</code></pre>
+
+<h2>Advanced Use Case: Cache From Chat History</h2>
+<pre><code>chat = client.chats.create(
+    model=model_name,
+    config=types.GenerateContentConfig(system_instruction=system_instruction),
+)
+document = client.files.upload(file=media / "a11.txt")
+
+response = chat.send_message(["Hi, could you summarize this transcript?", document])
+response = chat.send_message(["Okay, could you tell me more about the trans-lunar injection"])
+
+cache = client.caches.create(
+    model=model_name,
+    config={
+        "contents": chat.get_history(),
+        "system_instruction": system_instruction,
+    },
+)
+
+chat = client.chats.create(
+    model=model_name,
+    config=types.GenerateContentConfig(cached_content=cache.name),
+)
+response = chat.send_message("I didn't understand that last part, could you explain it simpler?")</code></pre>
+
+<h2>Data Models</h2>
+
+<h3>CachedContent Resource</h3>
+<p><strong>Output Fields</strong>:</p>
+<ul>
+  <li><code>name</code> (string) - resource identifier</li>
+  <li><code>createTime</code> (RFC 3339 timestamp)</li>
+  <li><code>updateTime</code> (RFC 3339 timestamp)</li>
+  <li><code>usageMetadata</code> - token consumption data</li>
+  <li><code>expireTime</code> (always provided on output)</li>
+</ul>
+
+<h3>Content Structure</h3>
+<pre><code>{
+  "parts": [Part objects],
+  "role": "user" | "model"
+}</code></pre>
+
+<h3>Part Types (Union)</h3>
+<ul>
+  <li><code>text</code> (string)</li>
+  <li><code>inlineData</code> (Blob with mimeType + base64 data)</li>
+  <li><code>fileData</code> (FileData with fileUri)</li>
+  <li><code>functionCall</code>, <code>functionResponse</code></li>
+  <li><code>executableCode</code>, <code>codeExecutionResult</code></li>
+  <li><code>toolCall</code>, <code>toolResponse</code></li>
+  <li><code>videoMetadata</code> (deprecated)</li>
+</ul>
+
+<h3>Tool Configuration</h3>
+<pre><code>{
+  "functionDeclarations[]": FunctionDeclaration[],
+  "googleSearchRetrieval": GoogleSearchRetrieval,
+  "codeExecution": CodeExecution,
+  "googleSearch": GoogleSearch,
+  "computerUse": ComputerUse,
+  "urlContext": UrlContext,
+  "fileSearch": FileSearch,
+  "mcpServers[]": McpServer[],
+  "googleMaps": GoogleMaps
+}</code></pre>
+
+<h3>FunctionDeclaration</h3>
+<ul>
+  <li><code>name</code> (string, required) - a-z, A-Z, 0-9, underscores, colons, dots, dashes; max 128 chars</li>
+  <li><code>description</code> (string, required)</li>
+  <li><code>parameters</code> (Schema) or <code>parametersJsonSchema</code></li>
+  <li><code>response</code> (Schema) or <code>responseJsonSchema</code></li>
+  <li><code>behavior</code> - BLOCKING | NON_BLOCKING</li>
+</ul>
+
+<h3>Schema Types</h3>
+<p>Supports: STRING, NUMBER, INTEGER, BOOLEAN, ARRAY, OBJECT, NULL</p>
+<p><strong>Properties</strong>:</p>
+<ul>
+  <li><code>type</code>, <code>format</code>, <code>title</code>, <code>description</code></li>
+  <li><code>nullable</code>, <code>enum[]</code>, <code>pattern</code></li>
+  <li><code>minLength</code>, <code>maxLength</code>, <code>minimum</code>, <code>maximum</code></li>
+  <li><code>minItems</code>, <code>maxItems</code>, <code>properties</code>, <code>required</code></li>
+  <li><code>anyOf[]</code>, <code>items</code>, <code>example</code>, <code>default</code></li>
+</ul>
+
+<h3>FileData</h3>
+<pre><code>{
+  "mimeType": string,
+  "fileUri": string
+}</code></pre>
+
+<h3>ExecutableCode</h3>
+<pre><code>{
+  "id": string,
+  "language": "PYTHON" (only supported language),
+  "code": string
+}</code></pre>
+
+<h3>CodeExecutionResult</h3>
+<pre><code>{
+  "id": string,
+  "outcome": "OUTCOME_OK" | "OUTCOME_FAILED" | "OUTCOME_DEADLINE_EXCEEDED",
+  "output": string
+}</code></pre>
+
+<h3>ToolCall</h3>
+<pre><code>{
+  "id": string,
+  "toolType": enum (GOOGLE_SEARCH_WEB, GOOGLE_SEARCH_IMAGE, URL_CONTEXT, GOOGLE_MAPS, FILE_SEARCH),
+  "args": Struct
+}</code></pre>
+
+<h3>ToolResponse</h3>
+<pre><code>{
+  "id": string,
+  "toolType": enum,
+  "response": Struct
+}</code></pre>
+
+<h3>FunctionCall</h3>
+<pre><code>{
+  "id": string,
+  "name": string,
+  "args": Struct
+}</code></pre>
+
+<h3>FunctionResponse</h3>
+<pre><code>{
+  "id": string,
+  "name": string,
+  "response": Struct,
+  "parts[]": FunctionResponsePart[],
+  "willContinue": boolean,
+  "scheduling": SILENT | WHEN_IDLE | INTERRUPT
+}</code></pre>
+
+<h3>GoogleSearch Configuration</h3>
+<pre><code>{
+  "timeRangeFilter": Interval,
+  "searchTypes": {
+    "webSearch": WebSearch,
+    "imageSearch": ImageSearch
+  }
+}</code></pre>
+
+<h3>Interval (Time Range)</h3>
+<pre><code>{
+  "startTime": RFC 3339 timestamp,
+  "endTime": RFC 3339 timestamp
+}</code></pre>
+
+<h3>FileSearch Configuration</h3>
+<pre><code>{
+  "fileSearchStoreNames[]": string[],
+  "metadataFilter": string,
+  "topK": integer
+}</code></pre>
+
+<h3>McpServer</h3>
+<pre><code>{
+  "name": string,
+  "streamableHttpTransport": {
+    "url": string,
+    "headers": Map&lt;string, string&gt;,
+    "timeout": duration,
+    "sseReadTimeout": duration,
+    "terminateOnClose": boolean
+  }
+}</code></pre>
+
+<h3>GoogleMaps</h3>
+<pre><code>{
+  "enableWidget": boolean
+}</code></pre>
+
+<h3>ToolConfig</h3>
+<pre><code>{
+  "functionCallingConfig": FunctionCallingConfig,
+  "retrievalConfig": RetrievalConfig,
+  "includeServerSideToolInvocations": boolean
+}</code></pre>
+
+<h3>FunctionCallingConfig</h3>
+<pre><code>{
+  "mode": AUTO | ANY | NONE | VALIDATED,
+  "allowedFunctionNames[]": string[]
+}</code></pre>
+
+<h3>RetrievalConfig</h3>
+<pre><code>{
+  "latLng": LatLng,
+  "languageCode": string (BCP47 format)
+}</code></pre>
+
+<h3>LatLng</h3>
+<pre><code>{
+  "latitude": number (-90.0 to +90.0),
+  "longitude": number (-180.0 to +180.0)
+}</code></pre>
+
+<h3>UsageMetadata</h3>
+<pre><code>{
+  "totalTokenCount": integer
+}</code></pre>
+
+<h3>VideoMetadata (Deprecated)</h3>
+<pre><code>{
+  "startOffset": duration,
+  "endOffset": duration,
+  "fps": number (0.0, 24.0]
+}</code></pre>
+
+<h3>MediaResolution</h3>
+<pre><code>{
+  "level": MEDIA_RESOLUTION_LOW | MEDIUM | HIGH | ULTRA_HIGH
+}</code></pre>
+
+<h3>ComputerUse</h3>
+<pre><code>{
+  "environment": ENVIRONMENT_BROWSER,
+  "excludedPredefinedFunctions[]": string[]
+}</code></pre>
+
+<h2>Important Constraints</h2>
+<ul>
+  <li>Cached content is model-specific: "can be only used with model it was created for"</li>
+  <li>Maximum display name: 128 Unicode characters</li>
+  <li>TTL format: duration in seconds with up to 9 fractional digits, ending with 's'</li>
+  <li>RFC 3339 timestamps use Z-normalization with 0, 3, 6, or 9 fractional digits</li>
+  <li>Function names limited to 128 characters</li>
+  <li>Schema <code>type</code> is required</li>
+  <li><code>updateMask</code> required for PATCH operations (comma-separated field names)</li>
+  <li>Only expiration fields are patchable</li>
+</ul>
+
+<h2>Response Format</h2>
+<p>All successful responses return JSON objects. List operations include <code>nextPageToken</code> for pagination. Delete operations return empty JSON <code>{}</code>.</p>
+
+<h2>Language Support</h2>
+<p>Official SDKs support Python, Go, TypeScript, Java, and C#, with shell/curl examples provided for direct API access.</p>
+</body>
+</html>

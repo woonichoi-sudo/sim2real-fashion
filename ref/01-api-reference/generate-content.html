@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Generate Content</title></head>
+<body>
+<h1>Gemini API: Generating Content</h1>
+
+<p>This page documents the Gemini API's content generation capabilities, specifically the <code>models.generateContent</code> and <code>models.streamGenerateContent</code> methods.</p>
+
+<h2>Method: models.generateContent</h2>
+
+<h3>Endpoint</h3>
+<pre><code>POST /v1beta/{model=models/*}:generateContent</code></pre>
+
+<h3>Path Parameters</h3>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+  <tr><td>model</td><td>string</td><td>Required. The name of the Model to use for generating the completion. Format: <code>models/{model}</code></td></tr>
+</table>
+
+<h3>Request Body Fields</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  <tr><td>contents[]</td><td>Content object</td><td>Required</td><td>The content of the current conversation with the model</td></tr>
+  <tr><td>tools[]</td><td>Tool object</td><td>Optional</td><td>A list of Tools the Model may use to generate the next response</td></tr>
+  <tr><td>toolConfig</td><td>ToolConfig object</td><td>Optional</td><td>Tool configuration for any Tool specified in the request</td></tr>
+  <tr><td>safetySettings[]</td><td>SafetySetting object</td><td>Optional</td><td>A list of unique SafetySetting instances for blocking unsafe content. There should not be more than one setting for each SafetyCategory type.</td></tr>
+  <tr><td>systemInstruction</td><td>Content object</td><td>Optional</td><td>Developer set system instruction(s). Currently, text only.</td></tr>
+  <tr><td>generationConfig</td><td>GenerationConfig object</td><td>Optional</td><td>Configuration options for model generation and outputs</td></tr>
+  <tr><td>cachedContent</td><td>string</td><td>Optional</td><td>The name of the content cached to use as context. Format: <code>cachedContents/{cachedContent}</code></td></tr>
+  <tr><td>serviceTier</td><td>ServiceTier enum</td><td>Optional</td><td>The service tier of the request</td></tr>
+  <tr><td>store</td><td>boolean</td><td>Optional</td><td>Configures the logging behavior for a given request</td></tr>
+</table>
+
+<h3>GenerationConfig Parameters</h3>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+  <tr><td>candidate_count</td><td>integer</td><td>Number of generated responses to return</td></tr>
+  <tr><td>stop_sequences</td><td>array</td><td>Set of character sequences that will stop output generation</td></tr>
+  <tr><td>max_output_tokens</td><td>integer</td><td>Maximum number of tokens to include in a response candidate</td></tr>
+  <tr><td>temperature</td><td>float</td><td>Controls the randomness of the output</td></tr>
+  <tr><td>topP</td><td>float</td><td>Maximum cumulative probability of tokens to consider when sampling</td></tr>
+  <tr><td>topK</td><td>integer</td><td>Maximum number of tokens to consider when sampling</td></tr>
+  <tr><td>seed</td><td>integer</td><td>Seed used in decoding. If not set, the request uses a randomly generated seed. (공식 페이지 확인 불가 — 값 미기재)</td></tr>
+  <tr><td>responseMimeType</td><td>string</td><td>MIME type of the generated candidate text. Supported values: <code>text/plain</code> (default), <code>application/json</code> (JSON response), <code>text/x.enum</code> (enum value). (text/x.enum 공식 페이지 확인 불가 — 값 미기재)</td></tr>
+  <tr><td>responseSchema</td><td>Schema object</td><td>Output schema of the generated candidate text. Used when responseMimeType is application/json. Documented as a subset of the JSON Schema specification; supported types include string, number, integer, boolean, object, array, null.</td></tr>
+  <tr><td>responseModalities[]</td><td>Modality enum array</td><td>The requested modalities of the response. Allowed values: <code>TEXT</code>, <code>IMAGE</code> (also AUDIO for applicable models — 공식 페이지 확인 불가).</td></tr>
+  <tr><td>imageConfig</td><td>ImageConfig object</td><td>Configuration for image generation output. Contains <code>aspectRatio</code> and <code>imageSize</code> sub-fields (see ImageConfig table below).</td></tr>
+  <tr><td>thinkingConfig</td><td>ThinkingConfig object</td><td>Configuration for thinking features. Contains <code>includeThoughts</code> and <code>thinkingBudget</code> sub-fields (see ThinkingConfig table below).</td></tr>
+  <tr><td>mediaResolution</td><td>MediaResolution enum</td><td>If specified, the media resolution specified will be used. Enum values: MEDIA_RESOLUTION_LOW, MEDIA_RESOLUTION_MEDIUM, MEDIA_RESOLUTION_HIGH (정확한 enum 명칭 공식 페이지 확인 불가 — 값 미기재).</td></tr>
+</table>
+
+<h3>ImageConfig Sub-fields</h3>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Allowed Values</th><th>Description</th></tr>
+  <tr><td>aspectRatio</td><td>string</td><td>1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9</td><td>Aspect ratio of the generated image</td></tr>
+  <tr><td>imageSize</td><td>string</td><td>512, 1K, 2K, 4K</td><td>Resolution of the generated image. Use uppercase 'K' (1K, 2K, 4K); "512" has no 'K' suffix; lowercase values are rejected.</td></tr>
+</table>
+
+<h3>ThinkingConfig Sub-fields</h3>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+  <tr><td>includeThoughts</td><td>boolean</td><td>If true, returns thought summaries (summarized versions of the model's raw thoughts offering insight into its internal reasoning) alongside responses.</td></tr>
+  <tr><td>thinkingBudget</td><td>integer</td><td>Guides the model on the number of thinking tokens to use for reasoning. <code>-1</code> = dynamic thinking; <code>0</code> = disable (where supported). Per-model ranges: 2.5 Pro 128–32,768 (cannot disable); 2.5 Flash 0–24,576; 2.5 Flash Lite 512–24,576.</td></tr>
+</table>
+
+<h3>SafetySetting Parameters</h3>
+<table border="1">
+  <tr><th>Parameter</th><th>Values</th></tr>
+  <tr><td>category</td><td>HARM_CATEGORY_HATE_SPEECH, HARM_CATEGORY_SEXUALLY_EXPLICIT, HARM_CATEGORY_DANGEROUS_CONTENT, HARM_CATEGORY_HARASSMENT, HARM_CATEGORY_CIVIC_INTEGRITY</td></tr>
+  <tr><td>threshold</td><td>BLOCK_LOW_AND_ABOVE, BLOCK_MEDIUM_AND_ABOVE, BLOCK_ONLY_HIGH, BLOCK_NONE</td></tr>
+</table>
+
+<h2>Method: models.streamGenerateContent</h2>
+
+<h3>Endpoint</h3>
+<pre><code>POST /v1beta/{model=models/*}:streamGenerateContent</code></pre>
+
+<p>Uses Server-Sent Events (SSE) for streaming responses. Same request body as <code>generateContent</code>.</p>
+
+<h2>Response: GenerateContentResponse</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>candidates[]</td><td>Candidate object</td><td>Candidate responses from the model</td></tr>
+  <tr><td>promptFeedback</td><td>PromptFeedback object</td><td>Returns the prompt's feedback related to the content filters</td></tr>
+  <tr><td>usageMetadata</td><td>UsageMetadata object</td><td>Metadata on the generation requests' token usage</td></tr>
+  <tr><td>modelVersion</td><td>string</td><td>The model version used to generate the response</td></tr>
+  <tr><td>responseId</td><td>string</td><td>responseId is used to identify each response</td></tr>
+  <tr><td>modelStatus</td><td>ModelStatus object</td><td>The current model status of this model</td></tr>
+</table>
+
+<h3>PromptFeedback</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>blockReason</td><td>BlockReason enum</td><td>If set, the prompt was blocked and no candidates are returned</td></tr>
+  <tr><td>safetyRatings[]</td><td>SafetyRating object</td><td>Ratings for safety of the prompt</td></tr>
+</table>
+
+<h3>UsageMetadata</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>promptTokenCount</td><td>integer</td><td>Number of tokens in the prompt</td></tr>
+  <tr><td>cachedContentTokenCount</td><td>integer</td><td>Number of tokens in the cached part of the prompt</td></tr>
+  <tr><td>candidatesTokenCount</td><td>integer</td><td>Total number of tokens across all generated responses</td></tr>
+  <tr><td>totalTokenCount</td><td>integer</td><td>Total token count (prompt + thoughts + response)</td></tr>
+  <tr><td>toolUsePromptTokenCount</td><td>integer</td><td>Number of tokens in tool-use prompt(s)</td></tr>
+  <tr><td>thoughtsTokenCount</td><td>integer</td><td>Number of tokens of thoughts for thinking models</td></tr>
+</table>
+
+<h3>BlockReason Enum</h3>
+<ul>
+  <li>BLOCK_REASON_UNSPECIFIED</li>
+  <li>SAFETY</li>
+  <li>OTHER</li>
+  <li>BLOCKLIST</li>
+  <li>PROHIBITED_CONTENT</li>
+  <li>IMAGE_SAFETY</li>
+</ul>
+
+<h2>Code Examples</h2>
+
+<h3>Python - Text Generation</h3>
+<pre><code>from google import genai
+
+client = genai.Client()
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Write a story about a magic backpack."
+)
+print(response.text)</code></pre>
+
+<h3>Python - Streaming</h3>
+<pre><code>for chunk in client.models.generate_content_stream(
+    model="gemini-3.5-flash",
+    contents="Write a long story."
+):
+    print(chunk.text, end="")</code></pre>
+
+<h3>Python - Chat (Multi-turn)</h3>
+<pre><code>chat = client.chats.create(model="gemini-3.5-flash")
+response = chat.send_message("Hello")
+print(response.text)</code></pre>
+
+<h3>Python - Image Input</h3>
+<pre><code>import PIL.Image
+image = PIL.Image.open("image.jpg")
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=["What is in this image?", image]
+)</code></pre>
+
+<h3>Python - Audio Input</h3>
+<pre><code>audio_file = client.files.upload(file=media / "sample.mp3")
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=["Describe this audio.", audio_file]
+)</code></pre>
+
+<h3>Python - JSON Mode</h3>
+<pre><code>from google.genai import types
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="List 3 colors in JSON",
+    config=types.GenerateContentConfig(
+        response_mime_type="application/json"
+    )
+)</code></pre>
+
+<h3>Python - Safety Settings</h3>
+<pre><code>from google.genai import types
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="...",
+    config=types.GenerateContentConfig(
+        safety_settings=[
+            types.SafetySetting(
+                category="HARM_CATEGORY_HATE_SPEECH",
+                threshold="BLOCK_LOW_AND_ABOVE"
+            )
+        ]
+    )
+)</code></pre>
+
+<h3>Python - System Instruction</h3>
+<pre><code>response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Hello",
+    config=types.GenerateContentConfig(
+        system_instruction="You are a helpful assistant."
+    )
+)</code></pre>
+
+<h3>Python - Context Caching</h3>
+<pre><code>cache = client.caches.create(
+    model="gemini-3.5-flash",
+    contents=[...],
+    config=types.CreateCachedContentConfig(ttl="600s")
+)
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Question about cached content",
+    config=types.GenerateContentConfig(cached_content=cache.name)
+)</code></pre>
+
+<h3>Shell (curl) Example</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY" \
+    -H 'Content-Type: application/json' \
+    -X POST \
+    -d '{
+      "contents": [{
+        "parts": [{"text": "Write a story about a magic backpack."}]
+      }]
+    }'</code></pre>
+
+<h3>Node.js Example</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const response = await ai.models.generateContent({
+  model: "gemini-3.5-flash",
+  contents: "Write a story about a magic backpack.",
+});
+console.log(response.text);</code></pre>
+
+<h3>Go Example</h3>
+<pre><code>client, _ := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey: os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGoogleAI,
+})
+result, _ := client.Models.GenerateContent(
+    ctx,
+    "gemini-3.5-flash",
+    genai.Text("Write a story about a magic backpack."),
+    nil,
+)</code></pre>
+
+<h2>Important Notes</h2>
+<ul>
+  <li>Input capabilities differ between models, including tuned models.</li>
+  <li>There should not be more than one SafetySetting for each SafetyCategory type.</li>
+  <li>The API will block any contents and responses that fail to meet the thresholds set by safety settings.</li>
+  <li>For video processing: after upload, poll until file state is ACTIVE before using in generateContent.</li>
+  <li>cachedContents must use format: <code>cachedContents/{cachedContent}</code></li>
+  <li>Safety ratings and content filtering are reported in GenerateContentResponse.prompt_feedback and for each candidate.</li>
+  <li>SDK default API version is v1beta; use v1 for stable production environments.</li>
+</ul>
+
+<h2>Base URL</h2>
+<p><code>https://generativelanguage.googleapis.com/v1beta/</code></p>
+
+<hr>
+<p><em>Source: https://ai.google.dev/api/generate-content — Fetched 2026-05-29</em></p>
+</body>
+</html>

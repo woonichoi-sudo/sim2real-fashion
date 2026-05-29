@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Text Generation - Gemini API</title></head>
+<body>
+<h1>Text Generation with the Gemini API</h1>
+
+<p>The Gemini API provides comprehensive guidance on using Google's Gemini <code>generateContent</code> API for text generation and multimodal AI applications.</p>
+
+<h2>Basic Text Generation</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="How does AI work?"
+)
+print(response.text)
+</code></pre>
+
+<h3>JavaScript</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
+const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: "How does AI work?"
+});
+console.log(response.text);
+</code></pre>
+
+<h3>REST</h3>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent
+
+{
+  "contents": [{"parts": [{"text": "How does AI work?"}]}]
+}
+</code></pre>
+
+<h2>Thinking with Gemini</h2>
+<p>Models can reason before responding, with configurable thinking levels that affect cost, latency, and intelligence trade-offs. Gemini models often have thinking enabled by default.</p>
+
+<p>Available thinking levels: <code>low</code>, <code>medium</code>, <code>high</code></p>
+
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Solve this step by step: What is 15% of 847?",
+    config=types.GenerateContentConfig(
+        thinking_config=types.ThinkingConfig(thinking_level="low")
+    ),
+)
+print(response.text)
+</code></pre>
+
+<h2>System Instructions and Other Configurations</h2>
+
+<h3>Python</h3>
+<pre><code>response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    config=types.GenerateContentConfig(
+        system_instruction="You are a cat. Your name is Neko."),
+    contents="Hello there"
+)
+print(response.text)
+</code></pre>
+
+<h3>REST</h3>
+<pre><code>{
+  "system_instruction": {
+    "parts": [{"text": "You are a cat. Your name is Neko."}]
+  },
+  "contents": [{"parts": [{"text": "Hello there"}]}]
+}
+</code></pre>
+
+<p><strong>참고:</strong> systemInstruction은 텍스트 전용으로 사용하며, 이미지 파트는 포함하지 않습니다. (프로젝트 정리 — 공식 명시 미확인) 공식 문서의 예시는 텍스트 파트(<code>{"text": ...}</code>)만 사용하며, 이미지 등 비텍스트 파트 사용을 명시적으로 금지하는 문구는 확인되지 않았습니다.</p>
+
+<h2>Generation Configuration Parameters</h2>
+
+<p>The <code>GenerateContentConfig</code> object supports the following parameters:</p>
+
+<table border="1">
+  <tr><th>Parameter</th><th>Description</th></tr>
+  <tr><td><code>temperature</code></td><td>Controls randomness. Default 1.0 for Gemini 3 models. Changing below 1.0 "may lead to unexpected behavior."</td></tr>
+  <tr><td><code>topP</code></td><td>Nucleus sampling parameter</td></tr>
+  <tr><td><code>topK</code></td><td>Top-k sampling parameter</td></tr>
+  <tr><td><code>stopSequences</code></td><td>Sequences where generation halts</td></tr>
+  <tr><td><code>responseMimeType</code></td><td>Output format (e.g., <code>application/json</code>)</td></tr>
+  <tr><td><code>thinking_config</code></td><td>Thinking level configuration</td></tr>
+  <tr><td><code>system_instruction</code></td><td>System-level instructions for model behavior</td></tr>
+</table>
+
+<pre><code>config = types.GenerateContentConfig(
+    temperature=0.1,
+    top_p=0.95,
+    top_k=40,
+    stop_sequences=["END"],
+    response_mime_type="application/json"
+)
+</code></pre>
+
+<h2>Multimodal Inputs</h2>
+
+<h3>Image Input (Python)</h3>
+<pre><code>from PIL import Image
+from google import genai
+
+client = genai.Client()
+image = Image.open("/path/to/organ.png")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=[image, "Tell me about this instrument"]
+)
+print(response.text)
+</code></pre>
+
+<p>Supported media types: images, documents, video, and audio.</p>
+
+<h2>Streaming Responses</h2>
+
+<h3>Python Streaming</h3>
+<pre><code>response = client.models.generate_content_stream(
+    model="gemini-3.5-flash",
+    contents=["Explain how AI works"]
+)
+for chunk in response:
+    print(chunk.text, end="")
+</code></pre>
+
+<h3>JavaScript Streaming</h3>
+<pre><code>const response = await ai.models.generateContentStream({
+    model: "gemini-3.5-flash",
+    contents: "Explain how AI works",
+});
+
+for await (const chunk of response) {
+    console.log(chunk.text);
+}
+</code></pre>
+
+<p>REST endpoint: Uses <code>alt=sse</code> parameter and <code>streamGenerateContent</code> endpoint.</p>
+
+<h2>Multi-turn Conversations (Chat)</h2>
+
+<p>Important note: "Chat functionality is only implemented as part of the SDKs. Behind the scenes, it still uses the generateContent API. For multi-turn conversations, the full conversation history is sent to the model."</p>
+
+<h3>Python Chat</h3>
+<pre><code>client = genai.Client()
+chat = client.chats.create(model="gemini-3.5-flash")
+
+response = chat.send_message("I have 2 dogs in my house.")
+print(response.text)
+
+response = chat.send_message("How many paws are in my house?")
+print(response.text)
+
+# Access conversation history
+for message in chat.get_history():
+    print(f'role - {message.role}', end=": ")
+    print(message.parts[0].text)
+</code></pre>
+
+<h3>Chat with Streaming</h3>
+<pre><code>response = chat.send_message_stream("I have 2 dogs in my house.")
+for chunk in response:
+    print(chunk.text, end="")
+</code></pre>
+
+<h2>Supported Languages</h2>
+<p>The API supports 25+ languages including English, German, Spanish, French, Chinese, Japanese, Korean, Arabic, Hindi, Thai, Vietnamese, and others.</p>
+
+<h2>Additional Resources</h2>
+<ul>
+  <li>Prompt engineering guides</li>
+  <li>Pricing information</li>
+  <li>Model documentation</li>
+  <li>Capability guides for images, video, audio, and document processing</li>
+  <li>Cookbook examples on GitHub</li>
+  <li>Framework integrations: LangChain, CrewAI, LlamaIndex, Vercel AI SDK</li>
+</ul>
+</body>
+</html>

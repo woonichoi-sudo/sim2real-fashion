@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Safety Settings</title></head>
+<body>
+<h1>Gemini API Safety Settings</h1>
+
+<h2>Section Headings</h2>
+<ol>
+  <li>Safety settings</li>
+  <li>Safety filters</li>
+  <li>Content safety filtering level</li>
+  <li>Safety filtering per request</li>
+  <li>Safety feedback</li>
+  <li>Adjust safety settings</li>
+</ol>
+
+<h2>Safety Filter Categories</h2>
+<table border="1">
+  <tr><th>Category</th><th>Description</th></tr>
+  <tr><td>Harassment</td><td>"Negative or harmful comments targeting identity and/or protected attributes"</td></tr>
+  <tr><td>Hate speech</td><td>"Content that is rude, disrespectful, or profane"</td></tr>
+  <tr><td>Sexually explicit</td><td>"Contains references to sexual acts or other lewd content"</td></tr>
+  <tr><td>Dangerous</td><td>"Promotes, facilitates, or encourages harmful acts"</td></tr>
+</table>
+
+<h2>Content Safety Probability Levels</h2>
+<ul>
+  <li>HIGH</li>
+  <li>MEDIUM</li>
+  <li>LOW</li>
+  <li>NEGLIGIBLE</li>
+</ul>
+
+<h2>Block Threshold Settings</h2>
+<table border="1">
+  <tr><th>Google AI Studio</th><th>API Value</th><th>Description</th></tr>
+  <tr><td>Off</td><td>OFF</td><td>"Turn off the safety filter"</td></tr>
+  <tr><td>Block none</td><td>BLOCK_NONE</td><td>"Always show regardless of probability of unsafe content"</td></tr>
+  <tr><td>Block few</td><td>BLOCK_ONLY_HIGH</td><td>"Block when high probability of unsafe content"</td></tr>
+  <tr><td>Block some</td><td>BLOCK_MEDIUM_AND_ABOVE</td><td>"Block when medium or high probability of unsafe content"</td></tr>
+  <tr><td>Block most</td><td>BLOCK_LOW_AND_ABOVE</td><td>"Block when low, medium or high probability of unsafe content"</td></tr>
+  <tr><td>N/A</td><td>HARM_BLOCK_THRESHOLD_UNSPECIFIED</td><td>"Threshold is unspecified, block using default threshold"</td></tr>
+</table>
+
+<h2>Code Examples</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Some potentially unsafe prompt",
+    config=types.GenerateContentConfig(
+      safety_settings=[
+        types.SafetySetting(
+            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        ),
+      ]
+    )
+)
+
+print(response.text)
+</code></pre>
+
+<h3>Go</h3>
+<pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "google.golang.org/genai"
+)
+
+func main() {
+    ctx := context.Background()
+    client, err := genai.NewClient(ctx, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    config := &amp;genai.GenerateContentConfig{
+        SafetySettings: []*genai.SafetySetting{
+            {
+                Category:  "HARM_CATEGORY_HATE_SPEECH",
+                Threshold: "BLOCK_LOW_AND_ABOVE",
+            },
+        },
+    }
+
+    response, err := client.Models.GenerateContent(
+        ctx,
+        "gemini-3.5-flash",
+        genai.Text("Some potentially unsafe prompt."),
+        config,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(response.Text())
+}
+</code></pre>
+
+<h3>JavaScript</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
+const safetySettings = [
+  {
+    category: "HARM_CATEGORY_HATE_SPEECH",
+    threshold: "BLOCK_LOW_AND_ABOVE",
+  },
+];
+
+async function main() {
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: "Some potentially unsafe prompt.",
+    config: {
+      safetySettings: safetySettings,
+    },
+  });
+  console.log(response.text);
+}
+
+await main();
+</code></pre>
+
+<h3>Java</h3>
+<pre><code>SafetySetting hateSpeechSafety = new SafetySetting(HarmCategory.HATE_SPEECH,
+        BlockThreshold.LOW_AND_ABOVE);
+
+GenerativeModel gm = new GenerativeModel(
+    "gemini-3.5-flash",
+    BuildConfig.apiKey,
+    null, // generation config is optional
+    Arrays.asList(hateSpeechSafety)
+);
+
+GenerativeModelFutures model = GenerativeModelFutures.from(gm);
+</code></pre>
+
+<h3>REST</h3>
+<pre><code>curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent" \
+      -H "x-goog-api-key: $GEMINI_API_KEY" \
+      -H "Content-Type: application/json" \
+      -X POST \
+      -d '{
+        "safetySettings": [
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_LOW_AND_ABOVE"}
+        ],
+        "contents": [{
+            "parts":[{
+                "text": "Some potentially unsafe prompt."
+            }]
+        }]
+    }'
+</code></pre>
+
+<h2>Key Notes and Warnings</h2>
+<ul>
+  <li>"Applications that use less restrictive safety settings may be subject to review"</li>
+  <li>The API has "built-in protections against core harms, such as content that endangers child safety. These types of harm are always blocked and cannot be adjusted"</li>
+  <li>"Due to the model's inherent safety, additional filters are Off by default"</li>
+  <li>Default block threshold for Gemini 2.5 and 3 models is <strong>Off</strong></li>
+</ul>
+
+<h2>Response Objects</h2>
+<ul>
+  <li><code>GenerateContentResponse</code> includes safety feedback</li>
+  <li><code>promptFeedback.blockReason</code> indicates blocked prompt content</li>
+  <li><code>Candidate.finishReason</code> and <code>Candidate.safetyRatings</code> provide response-level safety details</li>
+</ul>
+
+<hr>
+<p>Source URL: https://ai.google.dev/gemini-api/docs/safety-settings</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Live API Reference - Gemini API</title></head>
+<body>
+<h1>Live API - WebSockets API Reference</h1>
+
+<h2>Overview</h2>
+<p>The Live API is a <strong>preview</strong> WebSocket-based service that enables stateful, bidirectional communication with Gemini. It allows clients to send and receive text, audio, and video in real-time conversations.</p>
+
+<h2>WebSocket Endpoint</h2>
+<pre><code>wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent</code></pre>
+
+<h2>Session Configuration</h2>
+<p>Initial setup messages configure the session and include:</p>
+<ul>
+  <li>Model</li>
+  <li>Generation parameters</li>
+  <li>System instructions</li>
+  <li>Tools</li>
+</ul>
+<p><strong>Important</strong>: "You cannot update the configuration while the connection is open."</p>
+
+<h3>BidiGenerateContentSetup.generationConfig</h3>
+<p>The <code>generationConfig</code> object inside <code>BidiGenerateContentSetup</code> controls generation behavior. Its structure (per the official Live API reference):</p>
+<pre><code>"generationConfig": {
+  "candidateCount": integer,
+  "maxOutputTokens": integer,
+  "temperature": number,
+  "topP": number,
+  "topK": integer,
+  "presencePenalty": number,
+  "frequencyPenalty": number,
+  "responseModalities": [string],
+  "speechConfig": object,
+  "mediaResolution": object
+}</code></pre>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr>
+    <td><code>responseModalities</code></td>
+    <td><code>[string]</code> (array of Modality enum)</td>
+    <td>The requested modalities of the response. Represents the set of modalities the model can return; must be a subset of the model's supported modalities. Allowed values: <code>TEXT</code>, <code>AUDIO</code>, <code>IMAGE</code> (Modality enum). The Live API reference links this field to <code>GenerationConfig</code>; the enumerated Modality values are defined in the GenerationConfig reference <em>(개별 enum 값은 GenerationConfig 참조 문서 기준, Live API 페이지 자체에는 미열거)</em>.</td>
+  </tr>
+</table>
+
+<h2>Client Message Format</h2>
+<p>JSON objects must contain exactly one field:</p>
+<pre><code>{
+  "setup": BidiGenerateContentSetup,
+  "clientContent": BidiGenerateContentClientContent,
+  "realtimeInput": BidiGenerateContentRealtimeInput,
+  "toolResponse": BidiGenerateContentToolResponse
+}</code></pre>
+
+<h2>Client Messages</h2>
+<table border="1">
+  <tr><th>Message</th><th>Description</th></tr>
+  <tr><td><code>BidiGenerateContentSetup</code></td><td>First message sent; initial configuration for the session</td></tr>
+  <tr><td><code>BidiGenerateContentClientContent</code></td><td>Incremental content updates from the client / conversation updates</td></tr>
+  <tr><td><code>BidiGenerateContentRealtimeInput</code></td><td>Real-time audio/video/text input</td></tr>
+  <tr><td><code>BidiGenerateContentToolResponse</code></td><td>Responses to tool calls from the server</td></tr>
+</table>
+
+<h2>Server Messages</h2>
+<p><strong>BidiGenerateContentServerMessage</strong>: Response message containing one of:</p>
+<ul>
+  <li><code>setupComplete</code> - Confirms configuration</li>
+  <li><code>serverContent</code> - Model-generated responses</li>
+  <li><code>toolCall</code> - Function execution requests</li>
+  <li><code>toolCallCancellation</code></li>
+  <li><code>goAway</code> - Disconnection notice</li>
+  <li><code>sessionResumptionUpdate</code></li>
+</ul>
+
+<h2>Receiving Server Messages - Python Example</h2>
+<pre><code>async with client.aio.live.connect(model='...', config=config) as session:
+    await session.send(input='Hello world!', end_of_turn=True)
+    async for message in session.receive():
+        print(message)</code></pre>
+
+<h2>GenerationConfig Fields Not Supported in Live API</h2>
+<ul>
+  <li><code>responseLogprobs</code></li>
+  <li><code>responseMimeType</code></li>
+  <li><code>logprobs</code></li>
+  <li><code>responseSchema</code></li>
+  <li><code>stopSequence</code></li>
+  <li><code>routingConfig</code></li>
+  <li><code>audioTimestamp</code></li>
+</ul>
+
+<h2>Real-time Input Features</h2>
+<p>The API supports automatic activity detection with configurable sensitivity for:</p>
+<ul>
+  <li>Speech start/end detection</li>
+  <li>Silence duration</li>
+  <li>Interruption handling</li>
+</ul>
+<p>Clients can enable transcription for both input and output audio.</p>
+
+<h2>Session Management</h2>
+<p>Session resumption tokens allow reconnecting to previous conversations via <code>SessionResumptionConfig</code>. The server sends <code>SessionResumptionUpdate</code> messages. The system provides compression mechanisms to manage context window size automatically when configured.</p>
+
+<h2>Authentication - Ephemeral Tokens</h2>
+<p>Ephemeral tokens can be created via <code>AuthTokenService.CreateToken</code> (<code>AuthToken</code>) with configurable expiration times:</p>
+<ul>
+  <li>Default: 30 minutes</li>
+  <li>Maximum: 20 hours</li>
+</ul>
+<p>Tokens can be passed as query parameters or in the "Authorization" header.</p>
+
+<h2>UsageMetadata</h2>
+<ul>
+  <li><code>promptTokenCount</code></li>
+  <li><code>cachedContentTokenCount</code></li>
+  <li><code>responseTokenCount</code></li>
+  <li><code>totalTokenCount</code></li>
+</ul>
+</body>
+</html>

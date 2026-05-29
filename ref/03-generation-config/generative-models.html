@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Prompt Design Strategies for Generative Models</title></head>
+<body>
+<h1>Prompt Design Strategies for Gemini API</h1>
+<p>Note: The URL https://ai.google.dev/gemini-api/docs/models/generative-models redirects to the Prompt Design Strategies page.</p>
+
+<h2>Section Headings</h2>
+<ol>
+  <li>Prompt design strategies</li>
+  <li>Topic-specific prompt guides</li>
+  <li>Clear and specific instructions</li>
+  <li>Zero-shot vs few-shot prompts</li>
+  <li>Add context</li>
+  <li>Break down prompts into components</li>
+  <li>Experiment with model parameters</li>
+  <li>Prompt iteration strategies</li>
+  <li>Fallback responses</li>
+  <li>Grounding and code execution</li>
+  <li>Gemini 3</li>
+  <li>Agentic workflows</li>
+  <li>Next steps</li>
+</ol>
+
+<h2>Input Types Table</h2>
+<table border="1">
+  <tr><th>Input Type</th><th>Prompt Example</th><th>Output Summary</th></tr>
+  <tr><td>Question</td><td>Flower shop naming request (5 options)</td><td>Everlasting Blooms, Dried &amp; Delightful, The Petal Preserve, Whispers of Wildflowers, Forever Blooms</td></tr>
+  <tr><td>Task</td><td>Camping essentials list (5 items)</td><td>Tent, Sleeping Bag, Sleeping Pad, Headlamp/Flashlight, First Aid Kit</td></tr>
+  <tr><td>Entity</td><td>Animal size classification</td><td>Elephant (Large), Mouse (Small), Snail (Small)</td></tr>
+</table>
+
+<h2>Model Parameters</h2>
+<ul>
+  <li><strong>Max output tokens</strong>: "Specifies the maximum number of tokens that can be generated in the response."</li>
+  <li><strong>Temperature</strong>: Controls randomness in token selection. Range: 0 (deterministic) to higher values (creative). Note for Gemini 3 models: "we strongly recommend keeping the <code>temperature</code> at its default value of 1.0."</li>
+  <li><strong>topK</strong>: Selects next token from highest-probability options. Value of 1 means greedy decoding.</li>
+  <li><strong>topP</strong>: Tokens selected until cumulative probability equals this value. Default: 0.95</li>
+  <li><strong>stop_sequences</strong>: "Set a stop sequence to tell the model to stop generating content."</li>
+</ul>
+
+<h2>GenerationConfig Parameter Ranges (Master Doc Additions)</h2>
+<p>Note: Verified against the official REST reference (<code>GenerationConfig</code>, v1beta) at https://ai.google.dev/api/generate-content (fetched 2026-05-29).</p>
+<table border="1">
+  <tr><th>Parameter</th><th>Range / Note</th><th>Official Confirmation</th></tr>
+  <tr>
+    <td><strong>temperature</strong></td>
+    <td>Verbatim: "Values can range from [0.0, 2.0]." Default value varies by model.</td>
+    <td>Confirmed (official)</td>
+  </tr>
+  <tr>
+    <td><strong>topP</strong> &mdash; explicit range 0.0 ~ 1.0</td>
+    <td>Master doc states an explicit range of 0.0 ~ 1.0. The official <code>GenerationConfig</code> schema describes topP as "The maximum cumulative probability of tokens to consider when sampling" but does NOT state a numeric 0.0&ndash;1.0 range. <strong>(공식 확인 불가)</strong></td>
+    <td>Unconfirmed</td>
+  </tr>
+  <tr>
+    <td><strong>topP</strong> &mdash; "temperature와 동시 사용 비권장"</td>
+    <td>Master doc states topP is not recommended to be set together with temperature. The official docs do NOT support this; they describe combined Top-k and Top-p (nucleus) sampling as used TOGETHER ("Tokens are then further filtered based on topP with the final token selected using temperature sampling"). <strong>(공식 확인 불가 &mdash; 공식 문서는 오히려 함께 사용하는 결합 샘플링으로 설명)</strong></td>
+    <td>Unconfirmed / contradicted</td>
+  </tr>
+  <tr>
+    <td><strong>topK</strong> &mdash; explicit minimum 1 이상</td>
+    <td>Master doc states topK minimum is 1 or greater. The official <code>GenerationConfig</code> schema describes topK as "The maximum number of tokens to consider when sampling" but does NOT state an explicit minimum of 1. (The generative-models page does note that "A topK of 1 means... greedy decoding," implying 1 is a meaningful low value, but no explicit minimum bound is documented.) <strong>(공식 확인 불가)</strong></td>
+    <td>Unconfirmed</td>
+  </tr>
+</table>
+
+<h2>Zero-shot vs Few-shot</h2>
+<p>"Prompts without few-shot examples are likely to be less effective. In fact, you can remove instructions from your prompt if your examples are clear enough in showing the task at hand."</p>
+
+<h2>Temperature Note</h2>
+<p>"When using Gemini 3 models, we strongly recommend keeping the <code>temperature</code> at its default value of 1.0. Changing the temperature (setting it below 1.0) may lead to unexpected behavior."</p>
+
+<h2>Gemini 3 Core Principles</h2>
+<ul>
+  <li>"Be precise and direct: State your goal clearly and concisely."</li>
+  <li>Use consistent structure with XML tags or Markdown headings</li>
+  <li>Define parameters explicitly</li>
+  <li>Control output verbosity</li>
+  <li>Handle multimodal inputs coherently</li>
+  <li>Prioritize critical instructions in system instruction or prompt beginning</li>
+  <li>"Structure for long contexts: When providing large amounts of context...supply all the context first."</li>
+  <li>"Anchor context: After a large block of data, use a clear transition phrase."</li>
+</ul>
+
+<h2>Gemini 3 Flash Strategies</h2>
+<p><strong>Current day accuracy clause</strong>:<br>
+"For time-sensitive user queries that require up-to-date information, you MUST follow the provided current time (date and year) when formulating search queries in tool calls. Remember it is 2026 this year."</p>
+
+<p><strong>Knowledge cutoff clause</strong>:<br>
+"Your knowledge cutoff date is January 2025."</p>
+
+<h2>Key Code Examples</h2>
+
+<h3>JSON Response Example (restaurant order)</h3>
+<pre><code>{
+  "cheeseburger": 1,
+  "fries": 1
+}
+</code></pre>
+
+<h3>XML Structured Prompting Example</h3>
+<pre><code>&lt;role&gt;
+You are a helpful assistant.
+&lt;/role&gt;
+
+&lt;constraints&gt;
+1. Be objective.
+2. Cite sources.
+&lt;/constraints&gt;
+
+&lt;context&gt;
+[Insert User Input Here]
+&lt;/context&gt;
+
+&lt;task&gt;
+[Insert specific request here]
+&lt;/task&gt;
+</code></pre>
+
+<h3>Markdown Structured Example</h3>
+<pre><code># Identity
+You are a senior solution architect.
+
+# Constraints
+- No external libraries allowed.
+- Python 3.11+ syntax only.
+
+# Output format
+Return a single code block.
+</code></pre>
+
+<h2>Prompt Iteration Strategies</h2>
+<ol>
+  <li>Use different phrasing across versions</li>
+  <li>Switch to analogous tasks</li>
+  <li>Change order of prompt content (examples, context, input variations)</li>
+</ol>
+
+<h2>Agentic Workflow Dimensions</h2>
+<p><strong>Reasoning and Strategy</strong>:</p>
+<ul>
+  <li>Logical decomposition</li>
+  <li>Problem diagnosis</li>
+  <li>Information exhaustiveness</li>
+</ul>
+<p><strong>Execution and Reliability</strong>:</p>
+<ul>
+  <li>Adaptability</li>
+  <li>Persistence and Recovery</li>
+  <li>Risk Assessment</li>
+</ul>
+<p><strong>Interaction and Output</strong>:</p>
+<ul>
+  <li>Ambiguity and permission handling</li>
+  <li>Verbosity</li>
+  <li>Precision and completeness</li>
+</ul>
+
+<h2>Tools and Capabilities Referenced</h2>
+<ul>
+  <li>Google Search (grounding)</li>
+  <li>Code execution (Python)</li>
+  <li>Structured outputs</li>
+  <li>Function calling</li>
+  <li>File Search</li>
+  <li>Computer Use</li>
+  <li>URL context</li>
+  <li>Imagen (image generation)</li>
+  <li>Veo (video generation)</li>
+</ul>
+
+<hr>
+<p>Source URL: https://ai.google.dev/gemini-api/docs/models/generative-models</p>
+<p>Note: URL redirected to Prompt Design Strategies page.</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

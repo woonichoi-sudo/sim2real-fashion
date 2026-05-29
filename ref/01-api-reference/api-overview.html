@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - API Overview</title></head>
+<body>
+<h1>Gemini API Reference</h1>
+
+<h2>Primary Endpoints</h2>
+
+<p>The API offers several approaches for interacting with Gemini models:</p>
+
+<ul>
+  <li><strong>Interactions API (<code>CreateInteraction</code>)</strong>: "Optimized for agentic workflows, server-side state management, and complex multi-modal, multi-turn conversations" (v1beta only)</li>
+  <li><strong><code>generateContent</code></strong>: Standard REST endpoint. Returns full response in a single package.</li>
+  <li><strong><code>streamGenerateContent</code></strong>: Uses Server-Sent Events (SSE) for progressive response delivery.</li>
+  <li><strong><code>BidiGenerateContent</code></strong>: WebSocket-based bi-directional streaming (Live API) for real-time conversations.</li>
+  <li><strong><code>batchGenerateContent</code></strong>: Submits multiple generateContent requests in batch mode.</li>
+  <li><strong><code>embedContent</code></strong>: Generates text embedding vectors.</li>
+  <li><strong>Gen Media APIs</strong>: Specialized endpoints for image and video generation.</li>
+  <li><strong>Platform APIs</strong>: File upload, token counting, etc.</li>
+</ul>
+
+<h2>Authentication</h2>
+
+<p>All requests require an API key. Pass it via the <code>x-goog-api-key</code> header or as a query parameter <code>?key=$GEMINI_API_KEY</code>.</p>
+<p>API keys can be created in Google AI Studio.</p>
+
+<pre><code>-H "x-goog-api-key: $GEMINI_API_KEY"
+-H 'Content-Type: application/json'</code></pre>
+
+<h2>Content Generation</h2>
+
+<h3>Request Body Structure</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>contents</td><td>Content[] (required)</td><td>Array of Content objects representing conversation turns</td></tr>
+  <tr><td>role</td><td>string</td><td>"user" or "model"</td></tr>
+  <tr><td>parts</td><td>Part[]</td><td>Array of Part objects containing actual data (text, images, etc.)</td></tr>
+  <tr><td>text</td><td>string</td><td>Text content</td></tr>
+  <tr><td>inline_data (Blob)</td><td>object</td><td>For embedding raw media directly in requests; contains mime_type and data (base64)</td></tr>
+</table>
+
+<h3>Response Body Structure</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>candidates</td><td>Candidate[]</td><td>Array of Candidate objects</td></tr>
+  <tr><td>finishReason</td><td>string</td><td>Reason generation stopped (e.g., STOP)</td></tr>
+  <tr><td>index</td><td>integer</td><td>Response candidate index</td></tr>
+  <tr><td>usageMetadata</td><td>object</td><td>Token usage information</td></tr>
+  <tr><td>modelVersion</td><td>string</td><td>Model version used</td></tr>
+  <tr><td>responseId</td><td>string</td><td>Response identifier</td></tr>
+</table>
+
+<h2>Request Examples</h2>
+
+<h3>Text-only Prompt</h3>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GEMINI_API_KEY
+Content-Type: application/json
+
+{
+  "contents": [{
+    "parts": [{"text": "Explain how AI works in a single paragraph."}]
+  }]
+}</code></pre>
+
+<h3>Multimodal Prompt (Text and Image)</h3>
+<pre><code>{
+  "contents": [{
+    "parts": [
+      {"inline_data": {"mime_type": "image/jpeg", "data": "[base64_encoded_image]"}},
+      {"text": "What is in this picture?"}
+    ]
+  }]
+}</code></pre>
+
+<h3>Multi-turn Conversation (Chat)</h3>
+<pre><code>{
+  "contents": [
+    {"role": "user", "parts": [{"text": "Hello."}]},
+    {"role": "model", "parts": [{"text": "Hello! How can I help?"}]},
+    {"role": "user", "parts": [{"text": "Write a poem about the ocean."}]}
+  ]
+}</code></pre>
+
+<h3>Standard Response Example</h3>
+<pre><code>{
+  "candidates": [{
+    "content": {
+      "parts": [{"text": "At its core, Artificial Intelligence..."}],
+      "role": "model"
+    },
+    "finishReason": "STOP",
+    "index": 1
+  }],
+  "usageMetadata": {
+    "promptTokenCount": 10,
+    "candidatesTokenCount": 50,
+    "totalTokenCount": 60
+  },
+  "modelVersion": "gemini-2.0-flash"
+}</code></pre>
+
+<h2>Live API (BidiGenerateContent)</h2>
+<p>WebSocket-based bi-directional streaming for real-time conversations. Used for audio and low-latency interactive applications.</p>
+
+<h2>Key Takeaways</h2>
+<ul>
+  <li>Conversation history maintained by including multiple Content objects with alternating "user" and "model" roles.</li>
+  <li>SDKs default to v1beta; use v1 for stable production environments.</li>
+  <li>The Interactions API is optimized for agentic workflows and is v1beta only.</li>
+</ul>
+
+<hr>
+<p><em>Source: https://ai.google.dev/api — Fetched 2026-05-29</em></p>
+</body>
+</html>

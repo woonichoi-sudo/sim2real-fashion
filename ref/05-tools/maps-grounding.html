@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Grounding with Google Maps - Gemini API</title></head>
+<body>
+<h1>Grounding with Google Maps</h1>
+
+<h2>Overview</h2>
+<p>The Grounding with Google Maps feature for the Gemini API integrates location-aware functionality into applications using current Google Maps data, including over 250 million places.</p>
+
+<h2>Key Features</h2>
+<ul>
+  <li>Accurate, location-aware responses leveraging Google Maps' extensive database</li>
+  <li>Enhanced personalization based on user-provided location coordinates</li>
+  <li>Contextual widgets for interactive map displays alongside generated content</li>
+</ul>
+
+<h2>Why and When to Use Grounding with Google Maps</h2>
+<ul>
+  <li>Finding nearby restaurants, cafes, and services</li>
+  <li>Location-based recommendations</li>
+  <li>Trip planning and itinerary assistance</li>
+  <li>Geographic-specific queries requiring current factual data</li>
+</ul>
+
+<h2>API Methods and Parameters</h2>
+
+<h3>Python</h3>
+<pre><code>from google import genai
+from google.genai import types
+
+client = genai.Client()
+
+response = client.models.generate_content(
+    model='gemini-3.5-flash',
+    contents="Find me a good Italian restaurant nearby",
+    config=types.GenerateContentConfig(
+        tools=[types.Tool(google_maps=types.GoogleMaps())],
+        tool_config=types.ToolConfig(
+            retrieval_config=types.RetrievalConfig(
+                lat_lng=types.LatLng(latitude=34.050481, longitude=-118.248526)
+            )
+        )
+    )
+)
+print(response.text)
+</code></pre>
+
+<h3>JavaScript</h3>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
+const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: "Find me a good Italian restaurant nearby",
+    config: {
+        tools: [{ googleMaps: {} }],
+        toolConfig: {
+            retrievalConfig: {
+                latLng: { latitude: 34.050481, longitude: -118.248526 }
+            }
+        }
+    }
+});
+console.log(response.text);
+</code></pre>
+
+<h3>REST</h3>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent
+
+{
+  "contents": [{"parts": [{"text": "Find me a good Italian restaurant nearby"}]}],
+  "tools": [{"google_maps": {}}],
+  "tool_config": {
+    "retrieval_config": {
+      "lat_lng": {"latitude": 34.050481, "longitude": -118.248526}
+    }
+  }
+}
+</code></pre>
+
+<h2>Key Parameters</h2>
+<ul>
+  <li><code>googleMaps</code>: Tool configuration object to enable the feature</li>
+  <li><code>enableWidget</code>: Boolean to control whether a contextual map widget token is returned</li>
+  <li><code>latLng</code>: Location coordinates (latitude/longitude) for location context</li>
+  <li><code>retrievalConfig</code>: Configuration for location-based retrieval</li>
+</ul>
+
+<h2>Understanding the Grounding Response</h2>
+
+<p>Responses include grounding metadata:</p>
+<ul>
+  <li><code>groundingChunks</code>: Array of Maps sources with <code>uri</code>, <code>title</code>, and <code>placeId</code></li>
+  <li><code>groundingSupports</code>: Text span connections to sources</li>
+  <li><code>googleMapsWidgetContextToken</code>: Token for rendering the contextual widget (when <code>enableWidget: true</code>)</li>
+  <li><code>webSearchQueries</code>: Associated search queries used</li>
+</ul>
+
+<h2>Display the Google Maps Contextual Widget</h2>
+<p>Enable the widget by setting <code>enableWidget: true</code>. Render using the custom HTML element:</p>
+<pre><code>&lt;gmp-place-contextual context-token="YOUR_TOKEN_HERE"&gt;&lt;/gmp-place-contextual&gt;</code></pre>
+
+<h2>Service Usage Requirements (Attribution)</h2>
+<p>When displaying responses:</p>
+<ul>
+  <li>Google Maps sources must immediately follow the generated content</li>
+  <li>Sources must be viewable within one user interaction</li>
+  <li>Attribution text must read "Google Maps"</li>
+  <li>Text styling: Roboto font, 12–16sp size, 4.5:1 contrast ratio for accessibility</li>
+  <li>Display source titles and links</li>
+  <li>Inform users that Google Maps data supports the answers</li>
+</ul>
+
+<h2>Pricing and Rate Limits</h2>
+<ul>
+  <li><strong>Cost:</strong> $25 per 1,000 grounded prompts</li>
+  <li><strong>Free tier:</strong> 500 requests per day</li>
+</ul>
+
+<h2>Supported Models</h2>
+<table border="1">
+  <tr><th>Model</th><th>Supported</th></tr>
+  <tr><td>Gemini 3.5 Flash</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Pro Preview</td><td>Yes</td></tr>
+  <tr><td>Gemini 3.1 Flash-Lite</td><td>Yes</td></tr>
+  <tr><td>Gemini 3 Flash Preview</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Pro</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Flash</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.5 Flash-Lite</td><td>Yes</td></tr>
+  <tr><td>Gemini 2.0 Flash</td><td>Yes</td></tr>
+</table>
+
+<h2>Supported Tool Combinations</h2>
+<p>Google Maps grounding can be combined with other tools when using Gemini 3 models.</p>
+
+<h2>Limitations</h2>
+<ul>
+  <li>Text-based responses only (contextual widget is separate from model output)</li>
+  <li>Tool disabled by default; must be explicitly enabled in the <code>tools</code> parameter</li>
+  <li>Restricted use in certain high-risk activities and prohibited territories per Google Maps Platform terms</li>
+</ul>
+</body>
+</html>

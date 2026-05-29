@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Imagen API - Edit images | Vertex AI | Google Cloud</title></head>
+<body>
+<!--
+  원본 URL: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/imagen-api-edit
+  페치 일시: 2026-05-29
+  참고: Google Cloud 문서는 JavaScript 렌더링 기반으로 WebFetch가 본문을 가져오지 못했습니다.
+  아래 내용은 공식 Vertex AI 이미지 편집 문서 페이지들에서 수집한 실제 API 명세입니다.
+  출처 URLs:
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-insert-objects
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-remove-objects
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-outpainting
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/replace-image-background
+-->
+
+<h1>Imagen API - Edit images | Vertex AI | Google Cloud</h1>
+
+<p>
+  Imagen 이미지 편집 API를 사용하면 마스크 기반 인페인팅(inpainting), 아웃페인팅(outpainting),
+  배경 교체(background swap) 등의 편집 작업을 수행할 수 있습니다.
+</p>
+
+<h2>지원 모델</h2>
+<ul>
+  <li><code>imagen-3.0-capability-001</code> — 현재 편집 API의 기본 지원 모델</li>
+</ul>
+
+<h2>HTTP 엔드포인트</h2>
+
+<pre><code>POST https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict</code></pre>
+
+<h2>요청 본문 (Request Body)</h2>
+
+<pre><code>{
+  "instances": [
+    {
+      "prompt": "TEXT_PROMPT",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_RAW",
+          "referenceId": 1,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_BASE_IMAGE"
+          }
+        },
+        {
+          "referenceType": "REFERENCE_TYPE_MASK",
+          "referenceId": 2,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_MASK_IMAGE"  // USER_PROVIDED 일 때만 필요
+          },
+          "maskImageConfig": {
+            "maskMode": "MASK_MODE_USER_PROVIDED",
+            "dilation": 0.01
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "editMode": "EDIT_MODE_INPAINT_INSERTION",
+    "editConfig": {
+      "baseSteps": 35
+    },
+    "sampleCount": 4
+  }
+}</code></pre>
+
+<h2>instances 파라미터</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>prompt</code></td>
+      <td>string</td>
+      <td>조건부</td>
+      <td>편집 내용을 설명하는 텍스트 프롬프트. 삽입 작업 시 필수. 제거 작업 시 자동 마스크 사용 경우 빈 문자열 권장.</td>
+    </tr>
+    <tr>
+      <td><code>referenceImages</code></td>
+      <td>array</td>
+      <td>필수</td>
+      <td>편집에 사용할 참조 이미지 목록. 원본 이미지(RAW)와 마스크 이미지(MASK)를 포함.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>referenceImages 항목 구조</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>referenceType</code></td>
+      <td>string (enum)</td>
+      <td>
+        참조 이미지 유형:
+        <ul>
+          <li><code>REFERENCE_TYPE_RAW</code>: 편집할 원본 이미지</li>
+          <li><code>REFERENCE_TYPE_MASK</code>: 편집 영역을 지정하는 마스크 이미지</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>referenceId</code></td>
+      <td>integer</td>
+      <td>참조 이미지를 식별하는 고유 ID (예: 1, 2)</td>
+    </tr>
+    <tr>
+      <td><code>referenceImage.bytesBase64Encoded</code></td>
+      <td>string</td>
+      <td>Base64 인코딩된 이미지 데이터. 최대 10 MB.</td>
+    </tr>
+    <tr>
+      <td><code>maskImageConfig</code></td>
+      <td>object</td>
+      <td>REFERENCE_TYPE_MASK 항목에서 마스크 생성 방식 설정. maskMode, dilation, maskClasses 포함.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>maskImageConfig 구조</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>maskMode</code></td>
+      <td>string (enum)</td>
+      <td>
+        마스크 생성 방식:
+        <ul>
+          <li><code>MASK_MODE_DEFAULT</code>: 기본 마스크 모드</li>
+          <li><code>MASK_MODE_USER_PROVIDED</code>: 직접 제공한 마스크 이미지 사용</li>
+          <li><code>MASK_MODE_FOREGROUND</code>: 자동 전경 감지</li>
+          <li><code>MASK_MODE_BACKGROUND</code>: 자동 배경 감지</li>
+          <li><code>MASK_MODE_SEMANTIC</code>: 시맨틱 세그멘테이션 (maskClasses 지정 필요)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>dilation</code></td>
+      <td>float (0~1)</td>
+      <td>
+        마스크를 이미지 너비의 지정 비율만큼 팽창(확장). 마스크 경계 부정확성 보완.
+        <ul>
+          <li>USER_PROVIDED (삽입/제거): 0.01 권장</li>
+          <li>자동 감지 (삽입): 0.1 권장</li>
+          <li>아웃페인팅: 0.03 권장</li>
+          <li>제품 배경 교체: 0.00 권장</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>maskClasses</code></td>
+      <td>integer[]</td>
+      <td>MASK_MODE_SEMANTIC 전용. 시맨틱 세그멘테이션 클래스 ID 배열. 예: [175, 176] (자전거, 자동차)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>parameters 파라미터</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>editMode</code></td>
+      <td>string (enum)</td>
+      <td>필수</td>
+      <td>
+        편집 작업 유형:
+        <ul>
+          <li><code>EDIT_MODE_INPAINT_INSERTION</code>: 마스크 영역에 객체 삽입</li>
+          <li><code>EDIT_MODE_INPAINT_REMOVAL</code>: 마스크 영역의 객체 제거</li>
+          <li><code>EDIT_MODE_OUTPAINT</code>: 이미지 경계 확장</li>
+          <li><code>EDIT_MODE_BGSWAP</code>: 배경 교체 (전경 보존)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>editConfig</code></td>
+      <td>object</td>
+      <td>선택</td>
+      <td>편집 설정 객체 (아래 editConfig 구조 참조)</td>
+    </tr>
+    <tr>
+      <td><code>sampleCount</code></td>
+      <td>integer (1~4)</td>
+      <td>선택</td>
+      <td>생성할 이미지 변형 수. 기본값: 4</td>
+    </tr>
+    <tr>
+      <td><code>seed</code></td>
+      <td>integer</td>
+      <td>선택</td>
+      <td>결정론적 출력을 위한 시드 값</td>
+    </tr>
+    <tr>
+      <td><code>guidanceScale</code></td>
+      <td>float</td>
+      <td>선택</td>
+      <td>프롬프트 준수 강도 조절</td>
+    </tr>
+    <tr>
+      <td><code>negativePrompt</code></td>
+      <td>string</td>
+      <td>선택</td>
+      <td>생성 결과에서 제외할 내용 설명</td>
+    </tr>
+    <tr>
+      <td><code>safetyFilterLevel</code></td>
+      <td>string</td>
+      <td>선택</td>
+      <td>콘텐츠 필터링 수준 조절</td>
+    </tr>
+    <tr>
+      <td><code>personGeneration</code></td>
+      <td>string</td>
+      <td>선택</td>
+      <td>인물 생성 방식 제어</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="border-left:4px solid #09f; padding:8px 12px; margin:12px 0; background:#eef6ff;">
+<strong>[프로젝트 노트 — 실사화 작업용]</strong>
+<ul>
+<li><code>negativePrompt</code> 예시: <code>anime, cartoon, 2d, blurry</code> (비실사 요소 제외)</li>
+<li><code>guidanceScale</code>: 실사화에는 <strong>21+</strong> 권장 (프롬프트 반영 강도 높임)</li>
+</ul>
+</div>
+
+<h3>editConfig 구조</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>baseSteps</code></td>
+      <td>integer</td>
+      <td>
+        샘플링 스텝 수. 높을수록 품질 향상(지연 시간 증가).
+        권장값:
+        <ul>
+          <li>삽입(INPAINT_INSERTION): 35 시작, 최대 75</li>
+          <li>제거(INPAINT_REMOVAL): 12 시작, 최대 75</li>
+          <li>아웃페인팅(OUTPAINT): 35 시작</li>
+          <li>배경 교체(BGSWAP) 제품: 75 권장</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>outpaintingConfig</code></td>
+      <td>object</td>
+      <td>
+        EDIT_MODE_OUTPAINT 전용.
+        <ul>
+          <li><code>blendingMode</code>: "alpha-blending"</li>
+          <li><code>blendingFactor</code>: 0.01 권장</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>응답 본문 (Response Body)</h2>
+
+<pre><code>{
+  "predictions": [
+    {
+      "bytesBase64Encoded": "BASE64_IMG_BYTES",
+      "mimeType": "image/png"
+    }
+  ]
+}</code></pre>
+
+<h2>코드 예시</h2>
+
+<h3>객체 삽입 (EDIT_MODE_INPAINT_INSERTION) - Python</h3>
+<pre><code>from google import genai
+from google.genai.types import (
+    RawReferenceImage,
+    MaskReferenceImage,
+    MaskReferenceConfig,
+    EditImageConfig,
+)
+
+# 환경 변수 설정 필요:
+# export GOOGLE_CLOUD_PROJECT=PROJECT_ID
+# export GOOGLE_CLOUD_LOCATION=us-central1
+# export GOOGLE_GENAI_USE_VERTEXAI=True
+
+client = genai.Client()
+
+raw_ref = RawReferenceImage(
+    reference_image=Image.from_file(location="base_image.png"),
+    reference_id=0,
+)
+mask_ref = MaskReferenceImage(
+    reference_id=1,
+    reference_image=Image.from_file(location="mask_image.png"),
+    config=MaskReferenceConfig(
+        mask_mode="MASK_MODE_USER_PROVIDED",
+        mask_dilation=0.01,
+    ),
+)
+
+image = client.models.edit_image(
+    model="imagen-3.0-capability-001",
+    prompt="A plate of cookies",
+    reference_images=[raw_ref, mask_ref],
+    config=EditImageConfig(
+        edit_mode="EDIT_MODE_INPAINT_INSERTION",
+    ),
+)
+image.generated_images[0].image.save("output.png")</code></pre>
+
+<h3>객체 삽입 - 자동 전경 마스크 (Python)</h3>
+<pre><code>from google import genai
+from google.genai.types import (
+    RawReferenceImage,
+    MaskReferenceImage,
+    MaskReferenceConfig,
+    EditImageConfig,
+)
+
+client = genai.Client()
+
+raw_ref = RawReferenceImage(
+    reference_image=Image.from_file(location="fruit.png"),
+    reference_id=0,
+)
+mask_ref = MaskReferenceImage(
+    reference_id=1,
+    reference_image=None,  # 마스크 이미지 불필요 (자동 감지)
+    config=MaskReferenceConfig(
+        mask_mode="MASK_MODE_FOREGROUND",
+        mask_dilation=0.1,
+    ),
+)
+
+image = client.models.edit_image(
+    model="imagen-3.0-capability-001",
+    prompt="A small white ceramic bowl with lemons and limes",
+    reference_images=[raw_ref, mask_ref],
+    config=EditImageConfig(
+        edit_mode="EDIT_MODE_INPAINT_INSERTION",
+    ),
+)
+image.generated_images[0].image.save(output_file)</code></pre>
+
+<h3>객체 제거 (EDIT_MODE_INPAINT_REMOVAL) - REST</h3>
+<pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instances": [{
+      "prompt": "",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_RAW",
+          "referenceId": 1,
+          "referenceImage": {"bytesBase64Encoded": "BASE64_IMAGE"}
+        },
+        {
+          "referenceType": "REFERENCE_TYPE_MASK",
+          "referenceId": 2,
+          "referenceImage": {"bytesBase64Encoded": "BASE64_MASK"},
+          "maskImageConfig": {"maskMode": "MASK_MODE_USER_PROVIDED", "dilation": 0.01}
+        }
+      ]
+    }],
+    "parameters": {
+      "editConfig": {"baseSteps": 12},
+      "editMode": "EDIT_MODE_INPAINT_REMOVAL",
+      "sampleCount": 4
+    }
+  }' \
+  "https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict"</code></pre>
+
+<h3>아웃페인팅 (EDIT_MODE_OUTPAINT) - Python</h3>
+<pre><code>from google import genai
+from google.genai.types import (
+    RawReferenceImage,
+    MaskReferenceImage,
+    MaskReferenceConfig,
+    EditImageConfig,
+)
+
+client = genai.Client()
+
+raw_ref = RawReferenceImage(
+    reference_image=Image.from_file(location="living_room.png"),
+    reference_id=0,
+)
+mask_ref = MaskReferenceImage(
+    reference_id=1,
+    reference_image=Image.from_file(location="living_room_mask.png"),
+    config=MaskReferenceConfig(
+        mask_mode="MASK_MODE_USER_PROVIDED",
+        mask_dilation=0.03,
+    ),
+)
+
+image = client.models.edit_image(
+    model="imagen-3.0-capability-001",
+    prompt="A chandelier hanging from the ceiling",
+    reference_images=[raw_ref, mask_ref],
+    config=EditImageConfig(edit_mode="EDIT_MODE_OUTPAINT"),
+)
+image.generated_images[0].image.save("output-image.png")</code></pre>
+
+<h3>배경 교체 (EDIT_MODE_BGSWAP) - REST</h3>
+<pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d '{
+    "instances": [{
+      "prompt": "A light blue suitcase in front of a window in an airport",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_RAW",
+          "referenceId": 1,
+          "referenceImage": {"bytesBase64Encoded": "BASE64_IMAGE"}
+        },
+        {
+          "referenceType": "REFERENCE_TYPE_MASK",
+          "referenceId": 2,
+          "maskImageConfig": {
+            "maskMode": "MASK_MODE_BACKGROUND",
+            "dilation": 0.0
+          }
+        }
+      ]
+    }],
+    "parameters": {
+      "editConfig": {"baseSteps": 75},
+      "editMode": "EDIT_MODE_BGSWAP",
+      "sampleCount": 4
+    }
+  }' \
+  "https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict"</code></pre>
+
+<h2>제한 사항 및 참고 사항</h2>
+<ul>
+  <li>이미지 최대 크기: 10 MB (Base64 인코딩 기준)</li>
+  <li>마스크 이미지는 원본 이미지와 동일한 해상도여야 합니다.</li>
+  <li>출력 해상도는 원본 참조 이미지의 크기와 동일합니다.</li>
+  <li>아웃페인팅 시 원본 이미지의 200% 이상 확장 시 왜곡이 발생할 수 있습니다.</li>
+  <li>제거 시 마스크 인접 영역의 작은 객체들도 함께 제거될 수 있습니다.</li>
+  <li>마스크 외 영역의 변경은 보장되지 않습니다.</li>
+</ul>
+
+<h2>관련 페이지</h2>
+<ul>
+  <li><a href="MaskMode.html">MaskMode 열거형 참조</a></li>
+  <li><a href="EditMode.html">EditMode 열거형 참조</a></li>
+  <li><a href="imagen-api.html">Imagen API (이미지 생성)</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-insert-objects">객체 삽입 상세</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-remove-objects">객체 제거 상세</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-outpainting">아웃페인팅 상세</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/replace-image-background">배경 교체 상세</a></li>
+</ul>
+</body>
+</html>

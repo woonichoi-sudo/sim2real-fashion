@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - All Methods</title></head>
+<body>
+<h1>Gemini API - All Methods</h1>
+
+<p>Complete REST API reference for Google's Gemini API.</p>
+<p><strong>Service:</strong> generativelanguage.googleapis.com</p>
+<p><strong>Base URL:</strong> <code>https://generativelanguage.googleapis.com</code></p>
+
+<p>"Gemini is our most capable model, built from the ground up to be multimodal" and can "seamlessly understand, operate across, and combine different types of information including language, images, audio, video, and code."</p>
+
+<h2>REST Resources</h2>
+
+<h3>v1beta.batches</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>cancel</td><td>POST</td><td>/v1beta/{name=batches/*}:cancel</td><td>Cancel a batch request</td></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=batches/*}</td><td>Delete a batch</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=batches/*}</td><td>Get a batch</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/{name=batches}</td><td>List batches</td></tr>
+</table>
+
+<h3>v1beta.cachedContents</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>create</td><td>POST</td><td>/v1beta/cachedContents</td><td>Create cached content</td></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=cachedContents/*}</td><td>Delete cached content</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=cachedContents/*}</td><td>Get cached content</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/cachedContents</td><td>List cached contents</td></tr>
+  <tr><td>patch</td><td>PATCH</td><td>/v1beta/{cachedContent.name=cachedContents/*}</td><td>Update cached content</td></tr>
+</table>
+
+<h3>v1beta.corpora</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>create</td><td>POST</td><td>/v1beta/corpora</td><td>Create a corpus</td></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=corpora/*}</td><td>Delete a corpus</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=corpora/*}</td><td>Get a corpus</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/corpora</td><td>List corpora</td></tr>
+  <tr><td>patch</td><td>PATCH</td><td>/v1beta/{corpus.name=corpora/*}</td><td>Update a corpus</td></tr>
+  <tr><td>query</td><td>POST</td><td>/v1beta/{name=corpora/*}:query</td><td>Query a corpus</td></tr>
+</table>
+
+<h3>v1beta.fileSearchStores</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>create</td><td>POST</td><td>/v1beta/fileSearchStores</td><td>Create a file search store</td></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=fileSearchStores/*}</td><td>Delete a file search store</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=fileSearchStores/*}</td><td>Get a file search store</td></tr>
+  <tr><td>importFiles</td><td>POST</td><td>/v1beta/{name=fileSearchStores/*}:importFiles</td><td>Import files into a store</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/fileSearchStores</td><td>List file search stores</td></tr>
+</table>
+
+<h3>v1beta.fileSearchStores.documents</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=fileSearchStores/*/documents/*}</td><td>Delete a document</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=fileSearchStores/*/documents/*}</td><td>Get a document</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/{parent=fileSearchStores/*}/documents</td><td>List documents</td></tr>
+</table>
+
+<h3>v1beta.files</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=files/*}</td><td>Delete a file</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=files/*}</td><td>Get file metadata</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/files</td><td>List files</td></tr>
+</table>
+
+<h3>v1beta.models</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>generateContent</td><td>POST</td><td>/v1beta/{model=models/*}:generateContent</td><td>Generate content (standard)</td></tr>
+  <tr><td>streamGenerateContent</td><td>POST</td><td>/v1beta/{model=models/*}:streamGenerateContent</td><td>Generate content (streaming)</td></tr>
+  <tr><td>embedContent</td><td>POST</td><td>/v1beta/{model=models/*}:embedContent</td><td>Generate text embedding</td></tr>
+  <tr><td>batchEmbedContents</td><td>POST</td><td>/v1beta/{model=models/*}:batchEmbedContents</td><td>Batch generate embeddings</td></tr>
+  <tr><td>batchGenerateContent</td><td>POST</td><td>/v1beta/{batch.model=models/*}:batchGenerateContent</td><td>Enqueue a batch of GenerateContent requests for batch processing (asynchronous batch variant of generateContent)</td></tr>
+  <tr><td>countTokens</td><td>POST</td><td>/v1beta/{model=models/*}:countTokens</td><td>Count tokens in a prompt</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=models/*}</td><td>Get model details</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/models</td><td>List available models</td></tr>
+</table>
+
+<h3>v1beta.tunedModels</h3>
+<table border="1">
+  <tr><th>Method</th><th>HTTP</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>create</td><td>POST</td><td>/v1beta/tunedModels</td><td>Create a tuned model</td></tr>
+  <tr><td>delete</td><td>DELETE</td><td>/v1beta/{name=tunedModels/*}</td><td>Delete a tuned model</td></tr>
+  <tr><td>get</td><td>GET</td><td>/v1beta/{name=tunedModels/*}</td><td>Get a tuned model</td></tr>
+  <tr><td>list</td><td>GET</td><td>/v1beta/tunedModels</td><td>List tuned models</td></tr>
+  <tr><td>patch</td><td>PATCH</td><td>/v1beta/{tunedModel.name=tunedModels/*}</td><td>Update a tuned model</td></tr>
+  <tr><td>generateContent</td><td>POST</td><td>/v1beta/{model=tunedModels/*}:generateContent</td><td>Generate content with tuned model</td></tr>
+  <tr><td>streamGenerateContent</td><td>POST</td><td>/v1beta/{model=tunedModels/*}:streamGenerateContent</td><td>Stream content with tuned model</td></tr>
+</table>
+
+<h2>SDK References</h2>
+<ul>
+  <li>Python SDK</li>
+  <li>Go SDK</li>
+  <li>TypeScript/JavaScript SDK</li>
+  <li>Java SDK</li>
+  <li>C# (.NET) SDK</li>
+</ul>
+
+<hr>
+<p><em>Source: https://ai.google.dev/api/all-methods — Fetched 2026-05-29</em></p>
+</body>
+</html>

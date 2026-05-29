@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Using Tools with Gemini API</title></head>
+<body>
+<h1>Using Tools with Gemini API</h1>
+
+<p>The Gemini API documentation explains how tools extend model capabilities to access real-time information and perform complex tasks.</p>
+
+<h2>Available Built-in Tools</h2>
+
+<table border="1">
+  <tr><th>Tool</th><th>Purpose</th></tr>
+  <tr><td><strong>Google Search</strong></td><td>Ground responses in current events and facts from the web to reduce hallucinations</td></tr>
+  <tr><td><strong>Google Maps</strong></td><td>Location-aware assistants for travel planning and local business discovery</td></tr>
+  <tr><td><strong>Code Execution</strong></td><td>Python code execution for mathematical and data processing tasks</td></tr>
+  <tr><td><strong>URL Context</strong></td><td>Extract and analyze content from specific web pages or documents</td></tr>
+  <tr><td><strong>Computer Use (Preview)</strong></td><td>Screen viewing and browser UI interaction automation</td></tr>
+  <tr><td><strong>File Search</strong></td><td>Document indexing and RAG implementation</td></tr>
+</table>
+
+<h2>How Tool Execution Works</h2>
+
+<h3>Built-in Tool Flow</h3>
+<p>Google-managed tools execute within a single API call. The model receives your prompt, runs necessary tools on Google's servers, and returns the final answer. No additional round-trips required from your application.</p>
+
+<h3>Custom Tool Flow (Function Calling)</h3>
+<p>Custom tools (function calling) require your application's involvement:</p>
+<ol>
+  <li>The model generates structured JSON requesting a function call (with name, args, and unique ID)</li>
+  <li>Your application executes the function</li>
+  <li>Your application returns results to the model</li>
+  <li>The model generates its final response</li>
+</ol>
+
+<h3>Combining Built-in and Custom Tools Flow (Preview)</h3>
+<p>A preview feature allows combining both built-in and custom tools simultaneously using <strong>tool context circulation</strong> to coordinate execution across different environments.</p>
+<p>Supported model endpoint: <code>gemini-3.1-pro-preview-customtools</code></p>
+<p>Required configuration when mixing Google Search with custom functions:</p>
+<pre><code>include_server_side_tool_invocations=True</code></pre>
+
+<h2>Structured Outputs vs. Function Calling</h2>
+
+<p><strong>Structured outputs</strong> addresses schema compliance for <em>final</em> responses — ensuring the model's answer conforms to a specified JSON schema.</p>
+<p><strong>Function calling</strong> handles <em>intermediate</em> steps requiring external system integration — the model calls your functions to gather data before forming a response.</p>
+
+<h2>Structured Outputs with Tools</h2>
+
+<p>Gemini 3 series models support combining structured outputs with built-in tools. This ensures responses maintain required schemas while being grounded in external data (e.g., Google Search results). The differentiation matters: function calling is for intermediate tool steps, while structured output governs the final response format.</p>
+</body>
+</html>

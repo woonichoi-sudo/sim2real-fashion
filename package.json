@@ -1,0 +1,26 @@
+{
+  "name": "sim2real-fashion",
+  "version": "1.0.0",
+  "description": "Gemini API(Nano Banana)를 사용한 의류 이미지 실사화(2D → photorealistic) 및 마스킹 기반 편집 작업 정리.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woonichoi-sudo/sim2real-fashion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/woonichoi-sudo/sim2real-fashion/issues"
+  },
+  "homepage": "https://github.com/woonichoi-sudo/sim2real-fashion#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

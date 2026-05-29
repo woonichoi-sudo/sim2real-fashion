@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Models API Reference - Gemini API</title></head>
+<body>
+<h1>Google Gemini API - Models Endpoint Reference</h1>
+
+<h2>Overview</h2>
+<p>"Models endpoint provides a way for you to programmatically list the available models" and retrieve metadata about specific models.</p>
+
+<h2>API Methods</h2>
+
+<h3>1. models.get</h3>
+<p><strong>Purpose</strong>: Retrieves information about a specific model, including "version number, token limits, parameters and other metadata."</p>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/{name=models/*}</code></p>
+<p><strong>Path Parameter</strong>:</p>
+<ul>
+  <li><code>name</code> (string, required): Model resource name - format: <code>models/{model}</code></li>
+</ul>
+<p><strong>Request Body</strong>: Empty</p>
+<p><strong>Response</strong>: Model object</p>
+
+<p><strong>Python Example</strong>:</p>
+<pre><code>from google import genai
+
+client = genai.Client()
+model_info = client.models.get(model="gemini-3.5-flash")
+print(model_info)</code></pre>
+
+<p><strong>Go Example</strong>:</p>
+<pre><code>ctx := context.Background()
+client, err := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey:  os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGeminiAPI,
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+modelInfo, err := client.Models.Get(ctx, "gemini-3.5-flash", nil)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println(modelInfo)</code></pre>
+
+<p><strong>Shell Example</strong>:</p>
+<pre><code>curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash?key=$GEMINI_API_KEY</code></pre>
+
+<h3>2. models.list</h3>
+<p><strong>Purpose</strong>: "Lists the Models available through the Gemini API." Supports pagination.</p>
+<p><strong>Endpoint</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/models</code></p>
+<p><strong>Query Parameters</strong>:</p>
+<ul>
+  <li><code>pageSize</code> (integer): Max models per page; default 50, maximum 1000</li>
+  <li><code>pageToken</code> (string): Pagination token from previous request</li>
+</ul>
+<p><strong>Request Body</strong>: Empty</p>
+<p><strong>Response Schema</strong>:</p>
+<pre><code>{
+  "models": [
+    {
+      "name": string,
+      "baseModelId": string,
+      "version": string,
+      "displayName": string,
+      "description": string,
+      "inputTokenLimit": integer,
+      "outputTokenLimit": integer,
+      "supportedGenerationMethods": [string],
+      "thinking": boolean,
+      "temperature": number,
+      "maxTemperature": number,
+      "topP": number,
+      "topK": integer
+    }
+  ],
+  "nextPageToken": string
+}</code></pre>
+
+<p><strong>Python Example</strong>:</p>
+<pre><code>from google import genai
+
+client = genai.Client()
+
+print("List of models that support generateContent:\n")
+for m in client.models.list():
+    for action in m.supported_actions:
+        if action == "generateContent":
+            print(m.name)
+
+print("List of models that support embedContent:\n")
+for m in client.models.list():
+    for action in m.supported_actions:
+        if action == "embedContent":
+            print(m.name)</code></pre>
+
+<p><strong>Go Example</strong>:</p>
+<pre><code>ctx := context.Background()
+client, err := genai.NewClient(ctx, &genai.ClientConfig{
+    APIKey:  os.Getenv("GEMINI_API_KEY"),
+    Backend: genai.BackendGeminiAPI,
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+models, err := client.Models.List(ctx, &genai.ListModelsConfig{})
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println("List of models that support generateContent:")
+for _, m := range models.Items {
+    for _, action := range m.SupportedActions {
+        if action == "generateContent" {
+            fmt.Println(m.Name)
+            break
+        }
+    }
+}
+
+fmt.Println("\nList of models that support embedContent:")
+for _, m := range models.Items {
+    for _, action := range m.SupportedActions {
+        if action == "embedContent" {
+            fmt.Println(m.Name)
+            break
+        }
+    }
+}</code></pre>
+
+<p><strong>Shell Example</strong>:</p>
+<pre><code>curl https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY</code></pre>
+
+<h3>3. models.predict</h3>
+<p><strong>Purpose</strong>: Performs prediction requests.</p>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:predict</code></p>
+<p><strong>Path Parameter</strong>: <code>model</code> (string, required) - format: <code>models/{model}</code></p>
+<p><strong>Request Body</strong>:</p>
+<pre><code>{
+  "instances": [value],
+  "parameters": value
+}</code></pre>
+<p><strong>Response Body</strong>:</p>
+<pre><code>{
+  "predictions": [value]
+}</code></pre>
+
+<h3>4. models.predictLongRunning</h3>
+<p><strong>Purpose</strong>: "Same as models.predict but returns an LRO" (Long-Running Operation).</p>
+<p><strong>Endpoint</strong>: <code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:predictLongRunning</code></p>
+<p><strong>Path Parameter</strong>: <code>model</code> (string, required) - format: <code>models/{model}</code></p>
+<p><strong>Request Body</strong>:</p>
+<pre><code>{
+  "instances": [value],
+  "parameters": value
+}</code></pre>
+<p><strong>Response</strong>: Operation object (asynchronous)</p>
+
+<h2>Model Resource Object</h2>
+<table border="1">
+  <tr><th>Field Name</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Resource name - format: <code>models/{model}</code>, e.g., <code>models/gemini-1.5-flash-001</code></td></tr>
+  <tr><td><code>baseModelId</code></td><td>string</td><td>Base model name, e.g., <code>gemini-1.5-flash</code></td></tr>
+  <tr><td><code>version</code></td><td>string</td><td>Model version number, e.g., <code>1.0</code>, <code>1.5</code></td></tr>
+  <tr><td><code>displayName</code></td><td>string</td><td>Human-readable model name (max 128 UTF-8 chars)</td></tr>
+  <tr><td><code>description</code></td><td>string</td><td>Short model description</td></tr>
+  <tr><td><code>inputTokenLimit</code></td><td>integer</td><td>Maximum input token count</td></tr>
+  <tr><td><code>outputTokenLimit</code></td><td>integer</td><td>Maximum output token count</td></tr>
+  <tr><td><code>supportedGenerationMethods</code></td><td>string[]</td><td>Supported generation methods, e.g., <code>generateMessage</code>, <code>generateContent</code></td></tr>
+  <tr><td><code>thinking</code></td><td>boolean</td><td>Whether thinking (reasoning) is supported</td></tr>
+  <tr><td><code>temperature</code></td><td>number</td><td>Default temperature [0.0, maxTemperature]</td></tr>
+  <tr><td><code>maxTemperature</code></td><td>number</td><td>Maximum temperature value</td></tr>
+  <tr><td><code>topP</code></td><td>number</td><td>Default nucleus sampling value</td></tr>
+  <tr><td><code>topK</code></td><td>integer</td><td>Default top-k sampling value</td></tr>
+</table>
+
+<h2>SDK Support</h2>
+<p>Python, Go, TypeScript, Java, C# SDKs are available.</p>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - SafetySetting Type / Generating Content Reference</title></head>
+<body>
+<h1>Gemini API: Generating Content - REST Reference</h1>
+<p>Note: URL https://ai.google.dev/api/rest/v1/SafetySetting redirects to the general "Generating Content" reference page which includes SafetySetting as part of the request body.</p>
+
+<h2>Core Methods</h2>
+
+<h3>1. models.generateContent</h3>
+<p><strong>Endpoint:</strong> <code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:generateContent</code></p>
+<p><strong>Path Parameter:</strong></p>
+<ul>
+  <li><code>model</code> (string, required): Format <code>models/{model}</code></li>
+</ul>
+
+<h3>2. models.streamGenerateContent</h3>
+<p><strong>Endpoint:</strong> <code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent</code></p>
+<p>Returns streamed responses as <code>GenerateContentResponse</code> instances.</p>
+
+<h2>Request Body Structure</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  <tr><td>contents[]</td><td>Content object</td><td>Yes</td><td>Current conversation with model; single-turn or multi-turn</td></tr>
+  <tr><td>tools[]</td><td>Tool object</td><td>No</td><td>Functions or code execution tools available to model</td></tr>
+  <tr><td>toolConfig</td><td>ToolConfig object</td><td>No</td><td>Configuration for specified tools</td></tr>
+  <tr><td>safetySettings[]</td><td>SafetySetting object</td><td>No</td><td>Content filtering by harm category</td></tr>
+  <tr><td>systemInstruction</td><td>Content object</td><td>No</td><td>Developer-set system instructions (text only)</td></tr>
+  <tr><td>generationConfig</td><td>GenerationConfig object</td><td>No</td><td>Model generation and output configuration</td></tr>
+  <tr><td>cachedContent</td><td>string</td><td>No</td><td>Format: cachedContents/{cachedContent}</td></tr>
+  <tr><td>serviceTier</td><td>enum</td><td>No</td><td>Service tier specification</td></tr>
+  <tr><td>store</td><td>boolean</td><td>No</td><td>Logging behavior configuration</td></tr>
+</table>
+
+<h2>SafetySetting Type</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>category</td><td>enum (HarmCategory)</td><td>The category for this setting</td></tr>
+  <tr><td>threshold</td><td>enum (HarmBlockThreshold)</td><td>Controls the probability threshold at which harm is blocked</td></tr>
+</table>
+
+<h3>HarmCategory Enum Values</h3>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>HARM_CATEGORY_UNSPECIFIED</td><td>Category is unspecified</td></tr>
+  <tr><td>HARM_CATEGORY_DEROGATORY</td><td>PaLM - Negative or harmful comments targeting identity and/or protected attribute</td></tr>
+  <tr><td>HARM_CATEGORY_TOXICITY</td><td>PaLM - Content that is rude, disrespectful, or profane</td></tr>
+  <tr><td>HARM_CATEGORY_VIOLENCE</td><td>PaLM - Describes scenarios depicting violence against an individual or group, or general descriptions of gore</td></tr>
+  <tr><td>HARM_CATEGORY_SEXUAL</td><td>PaLM - Contains references to sexual acts or other lewd content</td></tr>
+  <tr><td>HARM_CATEGORY_MEDICAL</td><td>PaLM - Promotes unchecked medical advice</td></tr>
+  <tr><td>HARM_CATEGORY_DANGEROUS</td><td>PaLM - Dangerous content that promotes, facilitates, or encourages harmful acts</td></tr>
+  <tr><td>HARM_CATEGORY_HARASSMENT</td><td>Gemini - Harassment content</td></tr>
+  <tr><td>HARM_CATEGORY_HATE_SPEECH</td><td>Gemini - Hate speech and content</td></tr>
+  <tr><td>HARM_CATEGORY_SEXUALLY_EXPLICIT</td><td>Gemini - Sexually explicit content</td></tr>
+  <tr><td>HARM_CATEGORY_DANGEROUS_CONTENT</td><td>Gemini - Dangerous content</td></tr>
+  <tr><td>HARM_CATEGORY_CIVIC_INTEGRITY</td><td>Gemini - Content that may be used to harm civic integrity</td></tr>
+</table>
+
+<h3>HarmBlockThreshold Enum Values</h3>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>HARM_BLOCK_THRESHOLD_UNSPECIFIED</td><td>Threshold is unspecified, block using default threshold</td></tr>
+  <tr><td>BLOCK_LOW_AND_ABOVE</td><td>Content with NEGLIGIBLE will be allowed</td></tr>
+  <tr><td>BLOCK_MEDIUM_AND_ABOVE</td><td>Content with NEGLIGIBLE and LOW will be allowed</td></tr>
+  <tr><td>BLOCK_ONLY_HIGH</td><td>Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed</td></tr>
+  <tr><td>BLOCK_NONE</td><td>All content will be allowed</td></tr>
+  <tr><td>OFF</td><td>Turn off the safety filter</td></tr>
+</table>
+
+<h2>GenerationConfig Parameters</h2>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Purpose</th></tr>
+  <tr><td>candidateCount</td><td>integer</td><td>Number of response candidates</td></tr>
+  <tr><td>stopSequences[]</td><td>string</td><td>Sequences that halt generation</td></tr>
+  <tr><td>maxOutputTokens</td><td>integer</td><td>Maximum response length</td></tr>
+  <tr><td>temperature</td><td>float</td><td>Randomness (0.0-2.0)</td></tr>
+  <tr><td>topP</td><td>float</td><td>Nucleus sampling threshold</td></tr>
+  <tr><td>topK</td><td>integer</td><td>Top-k sampling limit</td></tr>
+</table>
+
+<h2>Response Structure: GenerateContentResponse</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>candidates[]</td><td>Candidate object</td><td>Model response candidates</td></tr>
+  <tr><td>promptFeedback</td><td>PromptFeedback object</td><td>Content filter feedback on prompt</td></tr>
+  <tr><td>usageMetadata</td><td>UsageMetadata object</td><td>Token usage statistics</td></tr>
+  <tr><td>modelVersion</td><td>string</td><td>Model version used</td></tr>
+  <tr><td>responseId</td><td>string</td><td>Unique response identifier</td></tr>
+  <tr><td>modelStatus</td><td>ModelStatus object</td><td>Current model operational status</td></tr>
+</table>
+
+<h3>PromptFeedback Fields</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Values</th></tr>
+  <tr><td>blockReason</td><td>enum</td><td>BLOCK_REASON_UNSPECIFIED, SAFETY, OTHER, BLOCKLIST, PROHIBITED_CONTENT, IMAGE_SAFETY</td></tr>
+  <tr><td>safetyRatings[]</td><td>SafetyRating object</td><td>Rating per category (max one per type)</td></tr>
+</table>
+
+<h3>UsageMetadata Fields</h3>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>promptTokenCount</td><td>integer</td><td>Tokens in prompt (includes cached content)</td></tr>
+  <tr><td>cachedContentTokenCount</td><td>integer</td><td>Tokens in cached portion</td></tr>
+  <tr><td>candidatesTokenCount</td><td>integer</td><td>Total tokens in responses</td></tr>
+  <tr><td>toolUsePromptTokenCount</td><td>integer</td><td>Tokens in tool-use prompts</td></tr>
+  <tr><td>thoughtsTokenCount</td><td>integer</td><td>Tokens for thinking models</td></tr>
+  <tr><td>totalTokenCount</td><td>integer</td><td>Complete token count</td></tr>
+</table>
+
+<h2>Supported Content Types</h2>
+<ul>
+  <li><strong>Text</strong>: Direct string input</li>
+  <li><strong>Images</strong>: JPEG, PNG (uploaded via Files API)</li>
+  <li><strong>Audio</strong>: MP3, WAV (requires upload via Files API)</li>
+  <li><strong>Video</strong>: MP4 (requires processing - polling until ACTIVE state)</li>
+  <li><strong>PDF</strong>: Documents (uploaded via Files API)</li>
+  <li><strong>Code</strong>: Execution and analysis</li>
+</ul>
+
+<h2>Key Features</h2>
+<ul>
+  <li><strong>JSON Mode</strong>: Returns responses in JSON format with optional schema validation using <code>response_mime_type: "application/json"</code> and <code>responseSchema</code></li>
+  <li><strong>Function Calling</strong>: Enables tool invocation through <code>tools[]</code> parameter with <code>FunctionDeclaration</code> objects</li>
+  <li><strong>Code Execution</strong>: Model can write and execute code; response includes both executable code parts and execution results</li>
+  <li><strong>Caching</strong>: Reference pre-computed content via <code>cachedContent</code> parameter to reduce token costs</li>
+  <li><strong>System Instructions</strong>: Set custom behavior through <code>systemInstruction</code> field (text-only currently)</li>
+</ul>
+
+<h2>SDK Support</h2>
+<ul>
+  <li>Python (google-genai)</li>
+  <li>Node.js/TypeScript</li>
+  <li>Go</li>
+  <li>Java</li>
+  <li>C#</li>
+</ul>
+
+<h2>Authorization</h2>
+<p>Requires API key passed as <code>key</code> query parameter or in request headers.</p>
+
+<hr>
+<p>Source URL: https://ai.google.dev/api/rest/v1/SafetySetting</p>
+<p>Note: URL redirected to the general "Generating Content" reference page.</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

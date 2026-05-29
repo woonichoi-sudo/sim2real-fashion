@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Vertex AI - GenerationConfig REST Reference</title></head>
+<body>
+<h1>GenerationConfig - Vertex AI REST API Reference</h1>
+<p>Source URL: https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/GenerationConfig</p>
+<p>Note: The URL redirects to docs.cloud.google.com and the page content is dominated by navigation/sitemap structure. The actual GenerationConfig field documentation was not accessible via the redirected URL. The following is reconstructed from the Gemini API generateContent reference (https://ai.google.dev/api/rest/v1/SafetySetting) which includes GenerationConfig fields.</p>
+
+<h2>GenerationConfig - Overview</h2>
+<p>Configuration options for model generation and outputs. Not all parameters are configurable for every model.</p>
+
+<h2>GenerationConfig Fields</h2>
+<table border="1">
+  <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+  <tr><td>stopSequences[]</td><td>string</td><td>The set of character sequences (up to 5) that will stop output generation. If specified, the API will stop at the first appearance of a stop sequence. The stop sequence will not be included as part of the response.</td></tr>
+  <tr><td>responseMimeType</td><td>string</td><td>Output response mimetype of the generated candidate text. Supported mimetype: text/plain (default), application/json, text/x.enum</td></tr>
+  <tr><td>responseSchema</td><td>Schema object</td><td>Output response schema of the generated candidate text when response MIME type can have schema. Schema can be objects, primitives or arrays and is a subset of OpenAPI schema.</td></tr>
+  <tr><td>responseModalities[]</td><td>string (enum Modality)</td><td>The requested modalities of the response. Represents the set of modalities that the model can return. Defaults to MODALITY_UNSPECIFIED which will default to the modalities supported by the request.</td></tr>
+  <tr><td>candidateCount</td><td>integer</td><td>Number of generated responses to return. Currently, this value can only be set to 1. If unset, this will default to 1.</td></tr>
+  <tr><td>maxOutputTokens</td><td>integer</td><td>The maximum number of tokens to include in a response candidate. Note: The default value varies by model.</td></tr>
+  <tr><td>temperature</td><td>number</td><td>Controls the randomness of the output. Note: The default value varies by model. Values can range from [0.0, 2.0].</td></tr>
+  <tr><td>topP</td><td>number</td><td>The maximum cumulative probability of tokens to consider when sampling. The model uses combined Top-k and Top-p (nucleus) sampling. Tokens are sorted based on their assigned probabilities so that only the most likely tokens are considered. Top-k sampling directly limits the maximum number of tokens to consider, while Nucleus sampling limits the number of tokens based on the cumulative probability.</td></tr>
+  <tr><td>topK</td><td>integer</td><td>The maximum number of tokens to consider when sampling. Gemini models use Top-p (nucleus) sampling or a combination of Top-k and nucleus sampling. Top-k sampling considers the set of topK most probable tokens. Models running with nucleus sampling don't allow topK setting.</td></tr>
+  <tr><td>seed</td><td>integer</td><td>Seed used in decoding. If not set, the request uses a randomly generated seed.</td></tr>
+  <tr><td>presencePenalty</td><td>number</td><td>Presence penalty applied to the next token's logprobs if the token has already been seen in the response. This penalty is binary on/off and not dependent on the number of times the token is used (after the first). Use frequencyPenalty for a penalty that increases with each use.</td></tr>
+  <tr><td>frequencyPenalty</td><td>number</td><td>Frequency penalty applied to the next token's logprobs, multiplied by the number of times each token has been seen in the response so far.</td></tr>
+  <tr><td>logprobs</td><td>integer</td><td>Only valid if responseLogprobs=True. This sets the number of top logprobs to return at each decoding step in the Candidate.logprobs_result.</td></tr>
+  <tr><td>responseLogprobs</td><td>boolean</td><td>If true, export the logprobs results in response.</td></tr>
+  <tr><td>enableEnhancedCivicAnswers</td><td>boolean</td><td>Optional. Enables enhanced civic answers. It may not be available for all models.</td></tr>
+  <tr><td>speechConfig</td><td>SpeechConfig object</td><td>The speech generation config.</td></tr>
+  <tr><td>thinkingConfig</td><td>ThinkingConfig object</td><td>Optional. Config for thinking features.</td></tr>
+  <tr><td>mediaResolution</td><td>enum (MediaResolution)</td><td>Optional. If specified, the media resolution specified will be used.</td></tr>
+  <tr><td>audioTimestamp</td><td>boolean</td><td>Optional. If enabled, audio timestamp will be included in the request to the model.</td></tr>
+  <tr><td>routingConfig</td><td>GenerationConfig.RoutingConfig object</td><td>Optional. Routing configuration.</td></tr>
+</table>
+
+<h2>Modality Enum Values</h2>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>MODALITY_UNSPECIFIED</td><td>Default value</td></tr>
+  <tr><td>TEXT</td><td>Indicates the model should return text</td></tr>
+  <tr><td>IMAGE</td><td>Indicates the model should return images</td></tr>
+  <tr><td>AUDIO</td><td>Indicates the model should return audio</td></tr>
+</table>
+
+<h2>MediaResolution Enum Values</h2>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>MEDIA_RESOLUTION_UNSPECIFIED</td><td>Media resolution has not been set</td></tr>
+  <tr><td>MEDIA_RESOLUTION_LOW</td><td>Media resolution set to low (64 tokens)</td></tr>
+  <tr><td>MEDIA_RESOLUTION_MEDIUM</td><td>Media resolution set to medium (256 tokens)</td></tr>
+  <tr><td>MEDIA_RESOLUTION_HIGH</td><td>Media resolution set to high (zoomed reframing with 256 tokens)</td></tr>
+</table>
+
+<h2>SpeechConfig Object</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>voiceConfig</td><td>VoiceConfig object</td><td>The configuration for the speaker to use</td></tr>
+  <tr><td>multiSpeakerVoiceConfig</td><td>MultiSpeakerVoiceConfig object</td><td>The configuration for the multi-speaker setup</td></tr>
+  <tr><td>languageCode</td><td>string</td><td>Optional. Language code (IETF BCP 47, e.g. "en-US") for speech synthesis</td></tr>
+</table>
+
+<h2>ThinkingConfig Object</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>thinkingBudget</td><td>integer</td><td>The number of thinking tokens the model should generate</td></tr>
+  <tr><td>includeThoughts</td><td>boolean</td><td>Indicates whether to include thoughts in the response; if true thoughts are returned only if the model supports thinking and thoughts are available</td></tr>
+  <tr><td>thinkingLevel</td><td>string (enum ThinkingLevel)</td><td>Thinking level to use for the model; affects quality and latency</td></tr>
+</table>
+
+<h2>ThinkingLevel Enum Values</h2>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>THINKING_LEVEL_UNSPECIFIED</td><td>Unspecified thinking level</td></tr>
+  <tr><td>NONE</td><td>No thinking</td></tr>
+  <tr><td>MINIMAL</td><td>Minimal thinking</td></tr>
+  <tr><td>LOW</td><td>Low thinking</td></tr>
+  <tr><td>MEDIUM</td><td>Medium thinking</td></tr>
+  <tr><td>HIGH</td><td>High thinking</td></tr>
+</table>
+
+<h2>RoutingConfig Object</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>autoMode</td><td>GenerationConfig.RoutingConfig.AutoRoutingMode object</td><td>Automated routing</td></tr>
+  <tr><td>manualMode</td><td>GenerationConfig.RoutingConfig.ManualRoutingMode object</td><td>Manual routing</td></tr>
+</table>
+
+<h2>AutoRoutingMode Object</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>modelRoutingPreference</td><td>enum (ModelRoutingPreference)</td><td>The model routing preference</td></tr>
+</table>
+
+<h3>ModelRoutingPreference Enum Values</h3>
+<table border="1">
+  <tr><th>Value</th><th>Description</th></tr>
+  <tr><td>UNKNOWN</td><td>Unspecified model routing preference</td></tr>
+  <tr><td>PRIORITIZE_QUALITY</td><td>Prefer higher quality</td></tr>
+  <tr><td>BALANCED</td><td>Balanced between quality and cost/latency</td></tr>
+  <tr><td>PRIORITIZE_COST</td><td>Prefer lower cost/latency</td></tr>
+</table>
+
+<h2>ManualRoutingMode Object</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>modelName</td><td>string</td><td>The model name to use. Only the public LLM models are accepted. e.g. 'gemini-1.5-pro-001'</td></tr>
+</table>
+
+<hr>
+<p>Source URL: https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/GenerationConfig</p>
+<p>Note: URL redirects to docs.cloud.google.com. Page content not fully accessible via WebFetch (returns navigation/sitemap). Fields reconstructed from related API reference pages.</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

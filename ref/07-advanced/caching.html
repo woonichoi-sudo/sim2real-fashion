@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Context Caching - Gemini API</title></head>
+<body>
+<h1>Context Caching in Google Gemini API</h1>
+
+<h2>Overview</h2>
+<p>The Gemini API provides two caching mechanisms: <strong>implicit caching</strong> (automatic, no cost guarantee) and <strong>explicit caching</strong> (manual, with cost savings guarantee).</p>
+
+<h2>Implicit Caching</h2>
+<p><strong>Status</strong>: Enabled by default for Gemini 2.5 and newer models. Requires no developer setup.</p>
+<p><strong>Minimum Token Limits by Model</strong>:</p>
+<table border="1">
+  <tr><th>Model</th><th>Min Token Limit</th></tr>
+  <tr><td>Gemini 3.5 Flash</td><td>1024</td></tr>
+  <tr><td>Gemini 3 Pro Preview</td><td>4096</td></tr>
+  <tr><td>Gemini 2.5 Flash</td><td>1024</td></tr>
+  <tr><td>Gemini 2.5 Pro</td><td>4096</td></tr>
+</table>
+<p><strong>Optimization strategies</strong>: Place large common content early in prompts; send similar requests within short timeframes.</p>
+
+<h2>Explicit Caching</h2>
+
+<h3>Key Configuration Parameters</h3>
+<ul>
+  <li><strong>TTL (Time to Live)</strong>: Default is 1 hour; configurable in seconds</li>
+  <li><strong>Display Name</strong>: Optional identifier for cache management (max 128 Unicode characters)</li>
+  <li><strong>System Instruction</strong>: Can be cached along with content</li>
+</ul>
+
+<h3>Core Operations</h3>
+
+<h4>Create Cache - Python</h4>
+<pre><code>cache = client.caches.create(
+    model=model,
+    config=types.CreateCachedContentConfig(
+        display_name='cache_identifier',
+        system_instruction='Your instruction here',
+        contents=[content],
+        ttl="300s",
+    )
+)</code></pre>
+
+<h4>Generate Using Cache - Python</h4>
+<pre><code>response = client.models.generate_content(
+    model=model,
+    contents='Your query',
+    config=types.GenerateContentConfig(cached_content=cache.name)
+)</code></pre>
+
+<h4>List Caches</h4>
+<p><strong>Python</strong>:</p>
+<pre><code>for cache in client.caches.list():
+    print(cache)
+client.caches.get(name=name)</code></pre>
+
+<p><strong>JavaScript</strong>:</p>
+<pre><code>const pager = await ai.caches.list({ config: { pageSize: 10 } });</code></pre>
+
+<p><strong>REST</strong>: <code>GET https://generativelanguage.googleapis.com/v1beta/cachedContents?key=$GEMINI_API_KEY</code></p>
+
+<h4>Update Cache</h4>
+<p><strong>Python - TTL</strong>:</p>
+<pre><code>client.caches.update(
+    name=cache.name,
+    config=types.UpdateCachedContentConfig(ttl='300s')
+)</code></pre>
+
+<p><strong>Python - Expire Time</strong>:</p>
+<pre><code>import datetime
+in10min = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+client.caches.update(
+    name=cache.name,
+    config=types.UpdateCachedContentConfig(expire_time=in10min)
+)</code></pre>
+
+<p><strong>JavaScript</strong>:</p>
+<pre><code>const ttl = `${2 * 3600}s`;
+const updatedCache = await ai.caches.update({ name: cache.name, config: { ttl } });</code></pre>
+
+<p><strong>REST</strong>:</p>
+<pre><code>curl -X PATCH "https://generativelanguage.googleapis.com/v1beta/$CACHE_NAME?key=$GEMINI_API_KEY" \
+    -H 'Content-Type: application/json' \
+    -d '{"ttl": "600s"}'</code></pre>
+
+<h4>Delete Cache</h4>
+<p><strong>Python</strong>: <code>client.caches.delete(cache.name)</code></p>
+<p><strong>JavaScript</strong>: <code>await ai.caches.delete({ name: cache.name });</code></p>
+<p><strong>REST</strong>: <code>curl -X DELETE "https://generativelanguage.googleapis.com/v1beta/$CACHE_NAME?key=$GEMINI_API_KEY"</code></p>
+
+<h2>Video Processing Example</h2>
+<pre><code>import requests, pathlib, time
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+url = 'https://storage.googleapis.com/generativeai-downloads/data/SherlockJr._10min.mp4'
+path = pathlib.Path('SherlockJr._10min.mp4')
+path.write_bytes(requests.get(url).content)
+
+video_file = client.files.upload(file=path)
+while video_file.state.name == 'PROCESSING':
+    time.sleep(2.5)
+    video_file = client.files.get(name=video_file.name)
+
+cache = client.caches.create(
+    model='models/gemini-3.5-flash',
+    config=types.CreateCachedContentConfig(
+        display_name='sherlock jr movie',
+        system_instruction='You are an expert video analyzer...',
+        contents=[video_file],
+        ttl="300s",
+    )
+)
+
+response = client.models.generate_content(
+    model='models/gemini-3.5-flash',
+    contents='Introduce different characters...',
+    config=types.GenerateContentConfig(cached_content=cache.name)
+)</code></pre>
+
+<h2>PDF Processing Example</h2>
+<pre><code>from google import genai
+from google.genai import types
+import io, httpx
+
+client = genai.Client()
+doc_io = io.BytesIO(httpx.get("https://sma.nasa.gov/SignificantIncidents/assets/a11_missionreport.pdf").content)
+
+document = client.files.upload(file=doc_io, config=dict(mime_type='application/pdf'))
+
+cache = client.caches.create(
+    model="gemini-3.5-flash",
+    config=types.CreateCachedContentConfig(
+        system_instruction="You are an expert analyzing transcripts.",
+        contents=[document],
+    )
+)
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Please summarize this transcript",
+    config=types.GenerateContentConfig(cached_content=cache.name)
+)</code></pre>
+
+<h2>JavaScript Example</h2>
+<pre><code>import { GoogleGenAI, createUserContent, createPartFromUri } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: "GEMINI_API_KEY" });
+
+async function main() {
+    const doc = await ai.files.upload({ file: "path/to/file.txt", config: { mimeType: "text/plain" } });
+
+    const cache = await ai.caches.create({
+        model: "gemini-3.5-flash",
+        config: {
+            contents: createUserContent(createPartFromUri(doc.uri, doc.mimeType)),
+            systemInstruction: "You are an expert analyzing transcripts.",
+        },
+    });
+
+    const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: "Please summarize this transcript",
+        config: { cachedContent: cache.name },
+    });
+}</code></pre>
+
+<h2>Go Example</h2>
+<pre><code>cache, err := client.Caches.Create(ctx, modelName, &genai.CreateCachedContentConfig{
+    Contents: contents,
+    SystemInstruction: genai.NewContentFromText("You are an expert analyzing transcripts.", genai.RoleUser),
+})
+
+response, err := client.Models.GenerateContent(
+    ctx,
+    modelName,
+    genai.Text("Please summarize this transcript"),
+    &genai.GenerateContentConfig{ CachedContent: cache.Name },
+)</code></pre>
+
+<h2>REST API Workflow</h2>
+<p><strong>Create Cache</strong>:</p>
+<pre><code>curl -X POST "https://generativelanguage.googleapis.com/v1beta/cachedContents?key=$GEMINI_API_KEY" \
+    -H 'Content-Type: application/json' \
+    -d @request.json</code></pre>
+
+<p><strong>Generate Content</strong>:</p>
+<pre><code>curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=$GEMINI_API_KEY" \
+    -H 'Content-Type: application/json' \
+    -d '{"contents": [...], "cachedContent": "'"$CACHE_NAME"'"}'</code></pre>
+
+<h2>Use Cases</h2>
+<p>"Context caching is particularly well suited to scenarios where a substantial initial context is referenced repeatedly by shorter requests." Optimal for:</p>
+<ul>
+  <li>Chatbots with extensive system instructions</li>
+  <li>Repetitive video file analysis</li>
+  <li>Recurring queries against large document sets</li>
+  <li>Code repository analysis and bug fixing</li>
+</ul>
+
+<h2>Cost Structure</h2>
+<p>Billing based on:</p>
+<ol>
+  <li><strong>Cache token count</strong>: Input tokens cached at reduced rate</li>
+  <li><strong>Storage duration (TTL)</strong>: Billed based on TTL duration</li>
+  <li><strong>Other factors</strong>: Non-cached input and output tokens</li>
+</ol>
+<p>Reference: <a href="/pricing">Gemini API Pricing Page</a> for current rates.</p>
+
+<h2>Additional Constraints</h2>
+<ul>
+  <li>Minimum token count varies by model; maximum equals model's standard limit</li>
+  <li>No distinction made between cached and regular input tokens</li>
+  <li>Standard GenerateContent rate limits apply</li>
+  <li>Cached token count returned in <code>usage_metadata</code> field</li>
+  <li>TTL format: duration in seconds with up to 9 fractional digits, ending with 's'</li>
+  <li>Cached content is model-specific: can only be used with the model it was created for</li>
+</ul>
+</body>
+</html>

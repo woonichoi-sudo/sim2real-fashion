@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Gemini API - Thought Signatures</title></head>
+<body>
+<h1>Thought Signatures - Gemini API Documentation</h1>
+
+<h2>Overview</h2>
+<p>Thought signatures are encrypted representations of a model's internal reasoning, preserving context across multi-step interactions. They're automatically handled by official SDKs but require manual management with REST APIs.</p>
+
+<h2>Key Concepts</h2>
+<p><strong>Turn vs. Step:</strong></p>
+<ul>
+  <li>A "turn" = complete user-model exchange</li>
+  <li>A "step" = individual operation within a turn (e.g., single function call)</li>
+</ul>
+
+<h2>Function Call Signatures</h2>
+
+<h3>Single/Sequential Calls</h3>
+<ul>
+  <li>First <code>functionCall</code> part contains <code>thoughtSignature</code></li>
+  <li>Must return signature in exact location received</li>
+  <li><strong>Gemini 3 requirement:</strong> Omitting signatures causes 400 error</li>
+</ul>
+
+<h3>Parallel Calls</h3>
+<ul>
+  <li>Only first <code>functionCall</code> part includes signature</li>
+  <li>Subsequent calls in same response lack signatures</li>
+  <li>Must preserve first signature when returning</li>
+</ul>
+
+<h2>Validation Rules</h2>
+<p>"The API goes back in the history (newest to oldest) to find the most recent <strong>User</strong> message that contains standard content" to establish current turn scope.</p>
+
+<p>Requirements for current turn:</p>
+<ul>
+  <li>First <code>functionCall</code> in each step must include <code>thoughtSignature</code></li>
+  <li>All previous turns don't require validation</li>
+  <li>Omission results in: <em>"Function call &lt;Function Call&gt; in the &lt;index&gt; content block is missing a <code>thought_signature</code>"</em></li>
+</ul>
+
+<h2>Non-Function Call Signatures</h2>
+<p>Text/in-context reasoning parts may contain signatures:</p>
+<ul>
+  <li><strong>Recommended</strong> to return for reasoning quality</li>
+  <li><strong>Not strictly enforced</strong> - omission won't cause errors</li>
+  <li>Helps maintain complex instruction following</li>
+</ul>
+
+<h2>Token Management (Gemini 3.5 Flash+)</h2>
+<p>"Beginning with Gemini 3.5 Flash, the model uses the reasoning context from all previous turns when thought signatures are present"</p>
+<p>Cost consideration: Preserving signatures increases input tokens in subsequent turns.</p>
+
+<h2>OpenAI Compatibility Format</h2>
+<p>Signatures stored in <code>extra_content.google.thought_signature</code> within <code>tool_calls</code> array objects.</p>
+
+<h2>Model Behavior Differences</h2>
+<table border="1">
+  <tr><th>Aspect</th><th>Gemini 3</th><th>Gemini 2.5</th></tr>
+  <tr><td>Function call response</td><td>Mandatory signature on first part</td><td>Optional</td></tr>
+  <tr><td>Non-function response</td><td>Signature on last part</td><td>No signature</td></tr>
+  <tr><td>Thought preservation</td><td>Uses previous context</td><td>Limited</td></tr>
+</table>
+
+<h2>Common Errors and Workarounds</h2>
+<p><strong>Missing signatures:</strong> "Failure to include signatures will result in a 400 error"</p>
+
+<p><strong>Dummy signatures for legacy imports:</strong></p>
+<ul>
+  <li><code>"context_engineering_is_the_way_to_go"</code></li>
+  <li><code>"skip_thought_signature_validator"</code></li>
+</ul>
+
+<p><strong>Parallel function interleaving issue:</strong> Expected format "FC1+sig, FC2, FR1, FR2" not "FC1+sig, FR1, FC2, FR2"</p>
+
+<p><strong>Streaming without function calls:</strong> Check for empty text parts containing signatures; parse until <code>finish_reason</code> appears.</p>
+
+<h2>SDK Handling</h2>
+<p>The documentation emphasizes that "thought signatures are handled automatically when you use the official Google Gen AI SDKs" and only require manual handling with REST API implementations or when manually constructing conversation history.</p>
+
+<h2>Critical Rules for Function Calling (Gemini 3)</h2>
+<ol>
+  <li><strong>Mandatory for current turn</strong>: You must include thought signatures for all function calls within the active turn, or requests will fail with a 400 error</li>
+  <li><strong>Signature placement</strong>: In parallel function calls, only the first <code>functionCall</code> part receives a signature; subsequent parallel calls do not</li>
+  <li><strong>Sequential calls</strong>: Each step in a multi-step sequence requires its signature preserved exactly as received</li>
+</ol>
+
+<hr>
+<p>Source URL: https://ai.google.dev/gemini-api/docs/thought-signatures</p>
+<p>Fetched: 2026-05-29</p>
+</body>
+</html>

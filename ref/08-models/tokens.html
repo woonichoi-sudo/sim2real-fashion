@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Token Counting API - Gemini API</title></head>
+<body>
+<h1>Google Gemini API - Token Counting (countTokens)</h1>
+
+<h2>Overview</h2>
+<p>The <code>models.countTokens</code> method runs the model's tokenizer on the input Content and returns the token count. This allows developers to calculate how many tokens a model will consume for given input <strong>before</strong> making an API call.</p>
+
+<h2>API Endpoint</h2>
+<pre><code>POST https://generativelanguage.googleapis.com/v1beta/{model=models/*}:countTokens</code></pre>
+
+<h2>Path Parameters</h2>
+<ul>
+  <li><code>model</code> (string, required): Model resource name. Format: <code>models/{model}</code></li>
+</ul>
+
+<h2>Request Body Fields</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>contents[]</code></td><td>object (Content)</td><td>Optional. Input prompt for the model</td></tr>
+  <tr><td><code>generateContentRequest</code></td><td>object (GenerateContentRequest)</td><td>Optional. Contains system instructions and function declarations</td></tr>
+</table>
+
+<h2>Response Body Fields</h2>
+<table border="1">
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>totalTokens</code></td><td>integer</td><td>Total number of tokens the model tokenized</td></tr>
+  <tr><td><code>cachedContentTokenCount</code></td><td>integer</td><td>Token count from cached content portions</td></tr>
+  <tr><td><code>promptTokensDetails[]</code></td><td>object (ModalityTokenCount)</td><td>List of processed modalities in the request input</td></tr>
+  <tr><td><code>cacheTokensDetails[]</code></td><td>object (ModalityTokenCount)</td><td>List of processed modalities in cached content</td></tr>
+</table>
+
+<h2>SDK Method Names</h2>
+<ul>
+  <li><strong>Python</strong>: <code>client.models.count_tokens()</code></li>
+  <li><strong>Node.js</strong>: <code>ai.models.countTokens()</code></li>
+  <li><strong>Go</strong>: <code>client.Models.CountTokens()</code></li>
+  <li><strong>Java</strong>: <code>model.countTokens()</code></li>
+</ul>
+
+<h2>Code Examples</h2>
+
+<h3>Python - Text</h3>
+<pre><code>from google import genai
+
+client = genai.Client()
+prompt = "The quick brown fox jumps over the lazy dog."
+total_tokens = client.models.count_tokens(
+    model="gemini-3.5-flash", contents=prompt
+)</code></pre>
+
+<h3>Node.js - Text</h3>
+<pre><code>const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const countTokensResponse = await ai.models.countTokens({
+  model: "gemini-3.5-flash",
+  contents: prompt,
+});</code></pre>
+
+<h3>Go - Text</h3>
+<pre><code>countResp, err := client.Models.CountTokens(ctx, "gemini-3.5-flash", contents, nil)</code></pre>
+
+<h2>Supported Input Content Types</h2>
+<ul>
+  <li>Text prompts</li>
+  <li>Chat conversations with history</li>
+  <li>Images (inline media)</li>
+  <li>Video files</li>
+  <li>PDF documents</li>
+  <li>Cached content</li>
+  <li>System instructions</li>
+  <li>Tool/function definitions</li>
+</ul>
+
+<h2>Important Notes</h2>
+<ul>
+  <li>Token counts for images are "independent of display or file size."</li>
+  <li>The guide recommends consulting the comprehensive "Token counting guide" for detailed information about how different media types are tokenized.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Files API - Gemini API</title></head>
+<body>
+<h1>Files API Documentation</h1>
+
+<p>This page documents Google's Files API for the Gemini API, explaining how to upload and manage media files for use with Gemini models.</p>
+
+<h2>Key Operations</h2>
+
+<h3>1. Upload a File</h3>
+
+<p>Use the Files API when total request size exceeds 100 MB, for PDFs over 50 MB, or for files you reuse across multiple requests.</p>
+
+<h4>Python</h4>
+<pre><code>from google import genai
+
+client = genai.Client()
+
+myfile = client.files.upload(file="path/to/sample.mp3")
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents=["Describe this audio clip", myfile]
+)
+print(response.text)
+</code></pre>
+
+<h4>JavaScript</h4>
+<pre><code>import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
+const myfile = await ai.files.upload({
+    file: "path/to/sample.mp3",
+    config: { mimeType: "audio/mpeg" }
+});
+
+const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: ["Describe this audio clip", { fileData: { fileUri: myfile.uri, mimeType: myfile.mimeType } }]
+});
+console.log(response.text);
+</code></pre>
+
+<h4>REST (Resumable Upload)</h4>
+<pre><code>AUDIO_PATH="path/to/sample.mp3"
+MIME_TYPE=$(file -b --mime-type "${AUDIO_PATH}")
+NUM_BYTES=$(wc -c &lt; "${AUDIO_PATH}")
+BASE_URL="https://generativelanguage.googleapis.com"
+
+# Step 1: Start upload
+curl "${BASE_URL}/upload/v1beta/files" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -D "upload-header.tmp" \
+  -H "X-Goog-Upload-Protocol: resumable" \
+  -H "X-Goog-Upload-Command: start" \
+  -H "X-Goog-Upload-Header-Content-Length: ${NUM_BYTES}" \
+  -H "X-Goog-Upload-Header-Content-Type: ${MIME_TYPE}" \
+  -H "Content-Type: application/json" \
+  -d "{'file': {'display_name': 'AUDIO'}}"
+
+# Get upload URL from response header
+upload_url=$(grep -i "x-goog-upload-url: " upload-header.tmp | cut -d" " -f2 | tr -d "\r")
+
+# Step 2: Upload the file bytes
+curl "${upload_url}" \
+  -H "X-Goog-Upload-Command: upload, finalize" \
+  -H "X-Goog-Upload-Offset: 0" \
+  --data-binary "@${AUDIO_PATH}" &gt; upload-response.tmp
+</code></pre>
+
+<h3>2. Get Metadata for a File</h3>
+
+<p>Verify that files were successfully stored and retrieve file information using <code>files.get</code>.</p>
+
+<pre><code># Python
+file_info = client.files.get(name=myfile.name)
+print(file_info.state)  # PROCESSING, ACTIVE, or FAILED
+
+# JavaScript
+const fileInfo = await ai.files.get({ name: myfile.name });
+
+# REST
+curl "https://generativelanguage.googleapis.com/v1beta/${FILE_NAME}" \
+  -H "x-goog-api-key: $GEMINI_API_KEY"
+</code></pre>
+
+<h3>3. List Uploaded Files</h3>
+
+<pre><code># Python
+for file in client.files.list():
+    print(file.name, file.display_name, file.state)
+
+# REST
+curl "https://generativelanguage.googleapis.com/v1beta/files" \
+  -H "x-goog-api-key: $GEMINI_API_KEY"
+</code></pre>
+
+<h3>4. Delete Uploaded Files</h3>
+
+<pre><code># Python
+client.files.delete(name=myfile.name)
+
+# REST
+curl -X DELETE "https://generativelanguage.googleapis.com/v1beta/${FILE_NAME}" \
+  -H "x-goog-api-key: $GEMINI_API_KEY"
+</code></pre>
+
+<h2>Usage Info / Storage Limits</h2>
+<ul>
+  <li>Up to 20 GB of files per project</li>
+  <li>Per-file maximum size: 2 GB</li>
+  <li>PDF files: 50 MB limit for inline; use Files API for larger</li>
+  <li>Automatic deletion after 48 hours (manual deletion available)</li>
+  <li>Available at no cost across all regions</li>
+</ul>
+
+<h2>Supported Media Types</h2>
+<ul>
+  <li>Audio: MP3, WAV, and other formats</li>
+  <li>Images: JPEG, PNG, WEBP, HEIC, HEIF</li>
+  <li>Videos: MP4, AVI, MOV, and other formats</li>
+  <li>Documents: PDF, plain text</li>
+</ul>
+
+<h2>File Prompting Strategies (Prompt Design Best Practices)</h2>
+<ul>
+  <li><strong>Be specific</strong> with instructions to avoid generic responses</li>
+  <li><strong>Use few-shot examples</strong> to demonstrate desired output patterns</li>
+  <li><strong>Break complex tasks</strong> into manageable steps</li>
+  <li><strong>Specify output format</strong> (JSON, markdown, HTML, etc.)</li>
+  <li><strong>Place single images before text</strong> for potentially better performance</li>
+  <li>Keep temperature at default 1.0 for Gemini 3 models</li>
+</ul>
+
+<h2>Troubleshooting Your Multimodal Prompt</h2>
+<p>When prompts underperform:</p>
+<ul>
+  <li>Add hints about which image sections to focus on</li>
+  <li>Ask the model to describe images before performing tasks</li>
+  <li>Test with lower temperature settings to reduce hallucination</li>
+  <li>Explicitly request step-by-step reasoning for complex problems</li>
+</ul>
+</body>
+</html>

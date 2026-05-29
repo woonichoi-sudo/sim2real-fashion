@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Edit image content using a mask with Imagen v.002 | Google Cloud</title></head>
+<body>
+<!--
+  원본 URL: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-imagen-edit-image-mask
+  페치 일시: 2026-05-29
+-->
+
+<h1>Edit image content using a mask with Imagen v.002</h1>
+
+<p>Stay organized with collections Save and categorize content based on your preferences.</p>
+
+<h2>Overview</h2>
+
+<p>This Google Cloud documentation page provides guidance on using the Imagen model for mask-based image editing through the Vertex AI platform.</p>
+
+<h2>Purpose</h2>
+
+<p>The sample demonstrates how to use Imagen to perform targeted edits on images by specifying a mask area and providing a text prompt describing desired modifications.</p>
+
+<h2>Setup Requirements</h2>
+<ul>
+  <li>Python environment with Vertex AI client libraries</li>
+  <li>Application Default Credentials for authentication</li>
+  <li>Input image file, mask image file, and desired output location</li>
+</ul>
+
+<h2>Code Sample (Python)</h2>
+
+<p>The provided Python code demonstrates the implementation:</p>
+
+<pre><code>import vertexai
+from vertexai.preview.vision_models import Image, ImageGenerationModel
+
+# TODO(developer): Update and un-comment below lines
+# PROJECT_ID = "your-project-id"
+# input_file = "input-image.png"
+# mask_file = "mask-image.png"
+# output_file = "output-image.png"
+# prompt = "" # The text prompt describing what you want to see.
+
+vertexai.init(project=PROJECT_ID, location="us-central1")
+
+model = ImageGenerationModel.from_pretrained("imagegeneration@002")
+base_img = Image.load_from_file(location=input_file)
+mask_img = Image.load_from_file(location=mask_file)
+
+images = model.edit_image(
+    base_image=base_img,
+    mask=mask_img,
+    prompt=prompt,
+    # Optional parameters
+    seed=1,
+    # Controls the strength of the prompt.
+    # -- 0-9 (low strength), 10-20 (medium strength), 21+ (high strength)
+    guidance_scale=21,
+    number_of_images=1,
+)
+
+images[0].save(location=output_file, include_generation_parameters=False)
+
+# Optional. View the edited image in a notebook.
+# images[0].show()
+
+print(f"Created output image using {len(images[0]._image_bytes)} bytes")
+# Example response:
+# Created output image using 971614 bytes
+</code></pre>
+
+<h2>Key Parameters</h2>
+
+<ul>
+  <li><strong>base_image</strong>: The base image to edit</li>
+  <li><strong>mask</strong>: The mask image specifying which area to edit</li>
+  <li><strong>prompt</strong>: Text prompt describing desired edits</li>
+  <li><strong>seed</strong>: For reproducibility</li>
+  <li><strong>guidance_scale</strong>: Controls prompt strength:
+    <ul>
+      <li>0–9: Low strength</li>
+      <li>10–20: Medium strength</li>
+      <li>21+: High strength</li>
+    </ul>
+  </li>
+  <li><strong>number_of_images</strong>: Quantity of output images</li>
+  <li><strong>include_generation_parameters</strong>: Whether to include generation parameters in saved output (False in example)</li>
+</ul>
+
+<h2>Model</h2>
+
+<p>The model used is: <code>imagegeneration@002</code></p>
+
+<p><strong>마이그레이션 권고:</strong> <code>imagegeneration@002</code>는 사용 중단 예정 모델입니다. 2026년 6월 30일까지 <code>gemini-2.5-flash-image</code>로 마이그레이션하는 것이 권장됩니다. 최신 편집 API는 <a href="imagen-api-edit.html">Imagen API Edit 참조</a> 및 <code>imagen-3.0-capability-001</code> 모델 사용을 권장합니다.</p>
+
+<h2>Authentication</h2>
+
+<p>Users need Application Default Credentials authentication. Follow Vertex AI's Python client library quickstart guide for setup.</p>
+
+<h2>Initialization</h2>
+
+<p>Initialize Vertex AI with your project ID and the US Central region (<code>us-central1</code>).</p>
+
+<h2>Additional Resources</h2>
+<ul>
+  <li>Python API reference documentation</li>
+  <li>Authentication setup guides</li>
+  <li>Google Cloud code sample browser for other products</li>
+</ul>
+
+<hr>
+
+<p><strong>직접 방문 URL:</strong> <a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-imagen-edit-image-mask">https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-imagen-edit-image-mask</a></p>
+</body>
+</html>

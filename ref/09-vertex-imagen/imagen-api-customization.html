@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>Imagen API customization | Vertex AI | Google Cloud</title></head>
+<body>
+<!--
+  원본 URL: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/imagen-api-customization
+  페치 일시: 2026-05-29
+  참고: Google Cloud 문서는 JavaScript 렌더링 기반으로 WebFetch가 본문을 가져오지 못했습니다.
+  아래 내용은 공식 Vertex AI 커스터마이제이션 문서 페이지들에서 수집한 실제 API 명세입니다.
+  출처 URLs:
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/subject-customization
+    https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/style-customization
+-->
+
+<h1>Imagen API customization | Vertex AI | Google Cloud</h1>
+
+<p>
+  Imagen 커스터마이제이션 API는 참조 이미지를 기반으로 특정 피사체(subject)나 스타일(style)을
+  유지하면서 새로운 이미지를 생성할 수 있게 해줍니다.
+</p>
+
+<h2>지원 모델</h2>
+<ul>
+  <li><code>imagen-3.0-capability-001</code></li>
+</ul>
+
+<h2>HTTP 엔드포인트</h2>
+
+<pre><code>POST https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict</code></pre>
+
+<h3>경로 파라미터</h3>
+<ul>
+  <li><strong>PROJECT_ID</strong>: Google Cloud 프로젝트 ID</li>
+  <li><strong>LOCATION</strong>: 지역 엔드포인트 (예: us-central1, europe-west2, asia-northeast3)</li>
+</ul>
+
+<hr>
+
+<h2>1. 피사체 커스터마이제이션 (Subject Customization)</h2>
+
+<p>특정 인물, 제품, 동물 등의 피사체를 유지하면서 새로운 장면이나 스타일의 이미지를 생성합니다.</p>
+
+<h3>요청 본문 구조</h3>
+
+<pre><code>{
+  "instances": [
+    {
+      "prompt": "watercolor portrait of woman [1] in pose of [2]",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_SUBJECT",
+          "referenceId": 1,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_PERSON_IMAGE"
+          },
+          "subjectImageConfig": {
+            "subjectDescription": "a headshot of a woman",
+            "subjectType": "SUBJECT_TYPE_PERSON"
+          }
+        },
+        {
+          "referenceType": "REFERENCE_TYPE_CONTROL",
+          "referenceId": 2,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_FACEMESH_IMAGE"
+          },
+          "controlImageConfig": {
+            "controlType": "CONTROL_TYPE_FACE_MESH",
+            "enableControlImageComputation": true
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "sampleCount": 1
+  }
+}</code></pre>
+
+<h3>referenceImages 필드 상세 (피사체 커스터마이제이션)</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>referenceType</code></td>
+      <td>string (enum)</td>
+      <td>필수</td>
+      <td>
+        <ul>
+          <li><code>REFERENCE_TYPE_SUBJECT</code>: 피사체 참조 이미지</li>
+          <li><code>REFERENCE_TYPE_CONTROL</code>: 제어(포즈/표정) 참조 이미지</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>referenceId</code></td>
+      <td>integer</td>
+      <td>필수</td>
+      <td>참조 이미지 식별자. 프롬프트에서 <code>[referenceId]</code> 형식으로 참조 (예: [1], [2])</td>
+    </tr>
+    <tr>
+      <td><code>referenceImage.bytesBase64Encoded</code></td>
+      <td>string</td>
+      <td>조건부</td>
+      <td>Base64 인코딩된 이미지 데이터 (또는 gcsUri 사용)</td>
+    </tr>
+    <tr>
+      <td><code>referenceImage.gcsUri</code></td>
+      <td>string</td>
+      <td>조건부</td>
+      <td>Google Cloud Storage URI (예: gs://bucket/path). bytesBase64Encoded 대신 사용 가능.</td>
+    </tr>
+    <tr>
+      <td><code>subjectImageConfig.subjectDescription</code></td>
+      <td>string</td>
+      <td>선택</td>
+      <td>참조 피사체에 대한 텍스트 설명 (예: "a headshot of a woman")</td>
+    </tr>
+    <tr>
+      <td><code>subjectImageConfig.subjectType</code></td>
+      <td>string (enum)</td>
+      <td>필수</td>
+      <td>
+        피사체 유형:
+        <ul>
+          <li><code>SUBJECT_TYPE_PERSON</code>: 인물</li>
+          <li><code>SUBJECT_TYPE_PRODUCT</code>: 제품/물체</li>
+          <li><code>SUBJECT_TYPE_ANIMAL</code>: 동물</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>controlImageConfig.controlType</code></td>
+      <td>string (enum)</td>
+      <td>선택</td>
+      <td><code>CONTROL_TYPE_FACE_MESH</code>: 얼굴 메쉬 제어 (현재 지원되는 유일한 타입)</td>
+    </tr>
+    <tr>
+      <td><code>controlImageConfig.enableControlImageComputation</code></td>
+      <td>boolean</td>
+      <td>선택</td>
+      <td>true로 설정 시 자동으로 제어 구조 감지</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>피사체 유형별 요구 사항</h3>
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>subjectType</th><th>사용 사례</th><th>참고 사항</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>SUBJECT_TYPE_PERSON</code></td>
+      <td>스타일 변형, 포즈 변형</td>
+      <td>얼굴이 중앙에 위치, 프레임의 50% 이상 차지, 정면 촬영, 가려짐 없어야 함</td>
+    </tr>
+    <tr>
+      <td><code>SUBJECT_TYPE_PRODUCT</code></td>
+      <td>객체 배치, 색상 변형</td>
+      <td>각도 보존은 성공률 낮음. 명확한 객체 가시성, 일관된 조명 권장</td>
+    </tr>
+    <tr>
+      <td><code>SUBJECT_TYPE_ANIMAL</code></td>
+      <td>동물 이미지</td>
+      <td>정체성 보존에 적합하지 않음</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Python 코드 예시 (피사체 커스터마이제이션)</h3>
+<pre><code>from google import genai
+from google.genai.types import (
+    ControlReferenceConfig,
+    ControlReferenceImage,
+    EditImageConfig,
+    Image,
+    SubjectReferenceConfig,
+    SubjectReferenceImage,
+)
+
+# 환경 변수 설정:
+# export GOOGLE_CLOUD_PROJECT=PROJECT_ID
+# export GOOGLE_CLOUD_LOCATION=us-central1
+# export GOOGLE_GENAI_USE_VERTEXAI=True
+
+client = genai.Client()
+
+subject_ref = SubjectReferenceImage(
+    reference_id=1,
+    reference_image=Image(gcs_uri="gs://bucket/person.png"),
+    config=SubjectReferenceConfig(
+        subject_description="a headshot of a woman",
+        subject_type="SUBJECT_TYPE_PERSON",
+    ),
+)
+
+control_ref = ControlReferenceImage(
+    reference_id=2,
+    reference_image=Image(gcs_uri="gs://bucket/facemesh.png"),
+    config=ControlReferenceConfig(control_type="CONTROL_TYPE_FACE_MESH"),
+)
+
+image = client.models.edit_image(
+    model="imagen-3.0-capability-001",
+    prompt="watercolor portrait of woman [1] in pose of [2]",
+    reference_images=[subject_ref, control_ref],
+    config=EditImageConfig(
+        edit_mode="EDIT_MODE_DEFAULT",
+        number_of_images=1,
+        safety_filter_level="BLOCK_MEDIUM_AND_ABOVE",
+    ),
+)</code></pre>
+
+<h3>REST curl 예시 (피사체 커스터마이제이션)</h3>
+<pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d @request.json \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/us-central1/publishers/google/models/imagen-3.0-capability-001:predict"</code></pre>
+
+<hr>
+
+<h2>2. 스타일 커스터마이제이션 (Style Customization)</h2>
+
+<p>참조 이미지의 스타일(예: 네온사인, 모자이크, 수채화)을 적용하여 새로운 이미지를 생성합니다.</p>
+
+<h3>요청 본문 구조</h3>
+
+<pre><code>{
+  "instances": [
+    {
+      "prompt": "Generate an image in neon sign style [1] based on the following caption: a sign saying have a great day",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_STYLE",
+          "referenceId": 1,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_ENCODED_IMAGE_BYTES"
+          },
+          "styleImageConfig": {
+            "styleDescription": "neon sign"
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "sampleCount": 2
+  }
+}</code></pre>
+
+<h3>referenceImages 필드 상세 (스타일 커스터마이제이션)</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>referenceType</code></td>
+      <td>string (enum)</td>
+      <td>필수</td>
+      <td><code>REFERENCE_TYPE_STYLE</code>: 스타일 참조 이미지</td>
+    </tr>
+    <tr>
+      <td><code>referenceId</code></td>
+      <td>integer (1~4)</td>
+      <td>필수</td>
+      <td>참조 이미지 식별자. 프롬프트에서 <code>[referenceId]</code> 형식으로 참조</td>
+    </tr>
+    <tr>
+      <td><code>referenceImage.bytesBase64Encoded</code></td>
+      <td>string</td>
+      <td>조건부</td>
+      <td>Base64 인코딩된 이미지 데이터</td>
+    </tr>
+    <tr>
+      <td><code>referenceImage.gcsUri</code></td>
+      <td>string</td>
+      <td>조건부</td>
+      <td>Google Cloud Storage URI. bytesBase64Encoded 대신 사용 가능.</td>
+    </tr>
+    <tr>
+      <td><code>styleImageConfig.styleDescription</code></td>
+      <td>string</td>
+      <td>선택</td>
+      <td>참조 스타일에 대한 텍스트 설명 (예: "neon sign", "mosaic style"). 생성 품질 향상에 도움.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>parameters 필드</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>필드</th><th>타입</th><th>범위</th><th>기본값</th><th>설명</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>sampleCount</code></td>
+      <td>integer</td>
+      <td>1~4</td>
+      <td>4</td>
+      <td>생성할 이미지 수</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>프롬프트 패턴 예시</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr><th>사용 사례</th><th>프롬프트 템플릿</th><th>예시</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>객체 스타일 변환</td>
+      <td><code>Generate an image in STYLE_DESCRIPTION [1] based on the following caption: IMAGE_DESCRIPTION</code></td>
+      <td>"Generate an image in neon sign style [1] based on the following caption: a sign saying have a great day"</td>
+    </tr>
+    <tr>
+      <td>인물 스타일화 (얼굴 메쉬 없이)</td>
+      <td><code>Create an image about SUBJECT_DESCRIPTION [1] to match the description: a portrait of SUBJECT_DESCRIPTION [1] ${PROMPT}</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>인물 스타일화 (얼굴 메쉬 사용)</td>
+      <td><code>Create an image about SUBJECT_DESCRIPTION [1] in the pose of the CONTROL_IMAGE [2] to match the description: a portrait of SUBJECT_DESCRIPTION [1] ${PROMPT}</code></td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Python 코드 예시 (스타일 커스터마이제이션)</h3>
+<pre><code>from google import genai
+from google.genai.types import (
+    EditImageConfig,
+    Image,
+    StyleReferenceConfig,
+    StyleReferenceImage,
+)
+
+client = genai.Client()
+
+# GCS URI를 사용한 스타일 참조 이미지
+style_reference_image = StyleReferenceImage(
+    reference_id=1,
+    reference_image=Image(gcs_uri="gs://cloud-samples-data/generative-ai/image/neon.png"),
+    config=StyleReferenceConfig(style_description="neon sign"),
+)
+
+image = client.models.edit_image(
+    model="imagen-3.0-capability-001",
+    prompt="generate an image of a neon sign [1] with the words: have a great day",
+    reference_images=[style_reference_image],
+    config=EditImageConfig(
+        edit_mode="EDIT_MODE_DEFAULT",
+        number_of_images=1,
+        safety_filter_level="BLOCK_MEDIUM_AND_ABOVE",
+        person_generation="ALLOW_ADULT",
+        output_gcs_uri="gs://your-bucket/your-prefix",
+    ),
+)
+
+print(image.generated_images[0].image.gcs_uri)</code></pre>
+
+<h3>REST curl 예시 (스타일 커스터마이제이션)</h3>
+<pre><code>curl -X POST \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -H "Content-Type: application/json; charset=utf-8" \
+     -d @request.json \
+     "https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict"</code></pre>
+
+<p><strong>request.json:</strong></p>
+<pre><code>{
+  "instances": [
+    {
+      "prompt": "Generate an image in neon sign style [1] based on the following caption: a sign saying have a great day",
+      "referenceImages": [
+        {
+          "referenceType": "REFERENCE_TYPE_STYLE",
+          "referenceId": 1,
+          "referenceImage": {
+            "bytesBase64Encoded": "BASE64_ENCODED_IMAGE_BYTES"
+          },
+          "styleImageConfig": {
+            "styleDescription": "neon sign"
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "sampleCount": 2
+  }
+}</code></pre>
+
+<h3>REST PowerShell 예시</h3>
+<pre><code>$cred = gcloud auth print-access-token
+$headers = @{ "Authorization" = "Bearer $cred" }
+
+Invoke-WebRequest `
+    -Method POST `
+    -Headers $headers `
+    -ContentType: "application/json; charset=utf-8" `
+    -InFile request.json `
+    -Uri "https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/imagen-3.0-capability-001:predict" | Select-Object -Expand Content</code></pre>
+
+<hr>
+
+<h2>응답 본문 (Response Body)</h2>
+
+<pre><code>{
+  "predictions": [
+    {
+      "bytesBase64Encoded": "BASE64_IMG_BYTES",
+      "mimeType": "image/png"
+    }
+  ]
+}</code></pre>
+
+<h2>공통 제한 사항</h2>
+<ul>
+  <li>요청당 최대 4개의 참조 이미지 사용 가능</li>
+  <li>이미지는 Base64 인코딩 또는 GCS URI 형식으로 제공</li>
+  <li>스타일 설명(styleDescription)은 선택 사항이지만 생성 품질 향상에 도움</li>
+  <li>출력 형식: PNG (MIME 타입: image/png)</li>
+  <li>제어 참조 이미지(controlImageConfig)는 요청당 하나만 지원</li>
+</ul>
+
+<h2>관련 페이지</h2>
+<ul>
+  <li><a href="imagen-api.html">Imagen API (이미지 생성)</a></li>
+  <li><a href="imagen-api-edit.html">Imagen API - 이미지 편집</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/subject-customization">피사체 커스터마이제이션 상세</a></li>
+  <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/style-customization">스타일 커스터마이제이션 상세</a></li>
+</ul>
+</body>
+</html>
